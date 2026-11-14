@@ -4,7 +4,7 @@
 
 begin;
 
-select plan(18);
+select plan(26);
 
 select has_table('private', 'verification_records',
   'verification records are stored outside the exposed public schema');
@@ -74,6 +74,23 @@ select ok(not has_function_privilege('anon',
 select ok(has_function_privilege('authenticated',
   'public.submit_report(uuid,text,text)', 'EXECUTE'),
   'signed-in users can submit reports through the validated RPC');
+
+select ok(not has_table_privilege('authenticated', 'public.blocks', 'INSERT'),
+  'clients cannot forge block ownership through direct INSERT');
+select ok(not has_table_privilege('authenticated', 'public.blocks', 'DELETE'),
+  'clients cannot bypass unblock validation through direct DELETE');
+select ok(not has_function_privilege('anon', 'public.block_user(uuid)', 'EXECUTE'),
+  'anonymous users cannot block accounts');
+select ok(has_function_privilege('authenticated', 'public.block_user(uuid)', 'EXECUTE'),
+  'signed-in users can block through the actor-bound RPC');
+select ok(not has_function_privilege('anon', 'public.unblock_user(uuid)', 'EXECUTE'),
+  'anonymous users cannot unblock accounts');
+select ok(has_function_privilege('authenticated', 'public.unblock_user(uuid)', 'EXECUTE'),
+  'signed-in users can unblock through the actor-bound RPC');
+select ok(not has_function_privilege('anon', 'public.get_blocked_users()', 'EXECUTE'),
+  'anonymous users cannot list blocked accounts');
+select ok(has_function_privilege('authenticated', 'public.get_blocked_users()', 'EXECUTE'),
+  'signed-in users can retrieve their own blocked-account list');
 
 select * from finish();
 rollback;
