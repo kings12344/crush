@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Text, View, Pressable, StyleSheet } from 'react-native';
+import { ActivityIndicator, Alert, Modal, ScrollView, TextInput, Text, View, Pressable, StyleSheet } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { Heading } from '../../components/Heading';
 import { Panel } from '../../components/Panel';
@@ -24,6 +24,10 @@ export default function Discover() {
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [reportTarget, setReportTarget] = useState<Profile | null>(null);
+  const [reportCategory, setReportCategory] = useState('harassment');
+  const [reportDetails, setReportDetails] = useState('');
+  const [submittingReport, setSubmittingReport] = useState(false);
 
   const loadProfiles = useCallback(async () => {
     setLoading(true);
@@ -83,6 +87,28 @@ export default function Discover() {
       );
     } finally {
       setActing(null);
+    }
+  };
+
+  const submitReport = async () => {
+    if (!reportTarget || submittingReport) return;
+    setSubmittingReport(true);
+    try {
+      assertSupabaseConfigured();
+      const { error: reportError } = await supabase.rpc('submit_report', {
+        p_target_user_id: reportTarget.id,
+        p_category: reportCategory,
+        p_details: reportDetails.trim() || null,
+      });
+      if (reportError) throw reportError;
+      const reportedName = reportTarget.display_name;
+      setReportTarget(null);
+      setReportDetails('');
+      Alert.alert('Report received', 'Thank you. Your report about ' + reportedName + ' was submitted privately for review.');
+    } catch {
+      Alert.alert('Could not submit report', 'Please check your connection and try again. Reports are limited to five per account per day.');
+    } finally {
+      setSubmittingReport(false);
     }
   };
 
@@ -146,6 +172,9 @@ export default function Discover() {
           ) : (
             <Text style={s.tip}>Friend requests are not available yet. Browsing does not send a request.</Text>
           )}
+          <Pressable accessibilityRole="button" disabled={acting !== null || submittingReport} onPress={() => { setReportTarget(profile); setReportCategory('harassment'); setReportDetails(''); }}>
+            <Text style={s.reportLink}>Report this profile</Text>
+          </Pressable>
         </Panel>
       )) : (
         <Panel>
@@ -156,7 +185,36 @@ export default function Discover() {
           <Pressable style={s.reset} onPress={() => void loadProfiles()}><Text style={s.likeText}>Refresh profiles</Text></Pressable>
         </Panel>
       )}
-      <Text style={s.note}>Pass currently hides a profile for this session only. Permanent pass history, friend requests and reporting are still being developed.</Text>
+      <Text style={s.note}>Pass currently hides a profile for this session only. Use Report this profile to privately flag safety concerns for review.</Text>
+      <Modal visible={reportTarget !== null} transparent animationType="slide" onRequestClose={() => !submittingReport && setReportTarget(null)}>
+        <View style={s.modalBackdrop}>
+          <View style={s.modalCard}>
+            <ScrollView keyboardShouldPersistTaps="handled">
+              <Text style={s.modalTitle}>Report profile</Text>
+              <Text style={s.tip}>Your report about {reportTarget?.display_name ?? 'this account'} is private. Choose the reason that best describes the concern.</Text>
+              {[
+                ['harassment', 'Harassment or bullying'],
+                ['impersonation', 'Fake profile or impersonation'],
+                ['underage', 'Possible underage account'],
+                ['spam', 'Spam or scams'],
+                ['unsafe_content', 'Unsafe or inappropriate content'],
+                ['other', 'Something else'],
+              ].map(([value, label]) => (
+                <Pressable key={value} accessibilityRole="radio" accessibilityState={{ selected: reportCategory === value }} style={[s.category, reportCategory === value && s.categorySelected]} onPress={() => setReportCategory(value)}>
+                  <Text style={[s.categoryText, reportCategory === value && s.categoryTextSelected]}>{reportCategory === value ? '●  ' : '○  '}{label}</Text>
+                </Pressable>
+              ))}
+              <Text style={s.fieldLabel}>Additional details (optional)</Text>
+              <TextInput value={reportDetails} onChangeText={setReportDetails} maxLength={4000} multiline textAlignVertical="top" placeholder="Tell us what happened. Avoid sharing passwords or unnecessary personal information." placeholderTextColor={colors.muted} style={s.reportInput} editable={!submittingReport} />
+              <Text style={s.characterCount}>{reportDetails.length}/4000</Text>
+              <Pressable accessibilityRole="button" disabled={submittingReport} style={[s.submitReport, submittingReport && s.disabledButton]} onPress={() => void submitReport()}>
+                {submittingReport ? <ActivityIndicator color="white" /> : <Text style={s.submitReportText}>Submit report</Text>}
+              </Pressable>
+              <Pressable accessibilityRole="button" disabled={submittingReport} style={s.cancelReport} onPress={() => setReportTarget(null)}><Text style={s.cancelReportText}>Cancel</Text></Pressable>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </Screen>
   );
 }
@@ -182,4 +240,20 @@ const s = StyleSheet.create({
   secret: { textAlign: 'center', paddingTop: 14, color: colors.pink, fontWeight: '800' },
   reset: { marginTop: 12, backgroundColor: colors.pink, alignItems: 'center', padding: 12, borderRadius: 12 },
   note: { fontSize: 11, color: colors.muted, lineHeight: 17 },
+  reportLink: { textAlign: 'center', color: '#A33D57', fontWeight: '800', paddingTop: 16, paddingBottom: 3 },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(20,12,18,0.55)', justifyContent: 'flex-end' },
+  modalCard: { backgroundColor: colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 22, maxHeight: '88%' },
+  modalTitle: { fontSize: 22, fontWeight: '900', color: colors.black, marginBottom: 8 },
+  category: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 13, marginTop: 8 },
+  categorySelected: { borderColor: colors.pink, backgroundColor: '#FFF0F6' },
+  categoryText: { color: colors.black, fontWeight: '700' },
+  categoryTextSelected: { color: colors.pink },
+  fieldLabel: { color: colors.black, fontWeight: '800', marginTop: 16, marginBottom: 8 },
+  reportInput: { minHeight: 104, maxHeight: 180, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, color: colors.black },
+  characterCount: { color: colors.muted, textAlign: 'right', fontSize: 11, marginTop: 5 },
+  submitReport: { backgroundColor: colors.pink, borderRadius: 12, padding: 15, alignItems: 'center', marginTop: 14, minHeight: 48, justifyContent: 'center' },
+  disabledButton: { opacity: 0.6 },
+  submitReportText: { color: 'white', fontWeight: '900' },
+  cancelReport: { padding: 14, alignItems: 'center' },
+  cancelReportText: { color: colors.muted, fontWeight: '800' },
 });
