@@ -26,7 +26,7 @@ export default function EmailConfirmed() {
       }
       try {
         await ensureProfile(data.user);
-        if (active) router.replace('/(auth)/pending');
+        if (active) router.replace('/pending');
       } catch {
         if (active) setStatus('Your email is confirmed, but we could not finish setting up your profile. Please sign in again.');
       }
