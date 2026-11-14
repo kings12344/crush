@@ -36,7 +36,7 @@ Migration files (filenames match the versions already recorded in the hosted Sup
 - supabase/migrations/20261114191122_secure_report_submission.sql
 - supabase/migrations/20261114191649_secure_block_controls.sql
 
-An Auth trigger creates a private pending/pending verification record automatically for every new account and backfills existing Auth users. Clients cannot write or promote these statuses. The hosted migrations are applied. Live catalog checks confirm RLS on all 10 public application tables and on private verification/rate-limit tables; the profile-photo bucket is private; direct client INSERT privileges on likes and Secret Crush are absent; and messages are in the Realtime publication.
+An Auth trigger creates a private pending/pending verification record automatically for every new account and backfills existing Auth users. Clients cannot write or promote these statuses. The hosted migrations are applied, and all 10 tracked migration filenames now exactly match the version/name history recorded by the hosted project. This prevents a later Supabase CLI push from treating already-applied migrations as new. Live catalog checks confirm RLS on all 10 public application tables and on private verification/rate-limit tables; the profile-photo bucket is private; direct client INSERT privileges on likes and Secret Crush are absent; and messages are in the Realtime publication.
 
 ### Current Supabase Advisor results — 15 November 2026
 
