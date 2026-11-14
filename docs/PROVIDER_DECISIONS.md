@@ -1,16 +1,22 @@
 # Provider shortlist and availability gates
 
+## Selected backend and authentication decision — 14 November 2026
+
+The user selected Supabase and approved replacing the previous NestJS + Clerk direction. Supabase is now the backend and authentication platform for CRUSH. The hosted project is CRUSH (reference: dtlbpkcaojctamelogbv) in EU West. The mobile feature branch integrates Supabase Auth and a SecureStore-backed session adapter; the database schema, private photo bucket and RLS policies are applied.
+
+Clerk and Auth0 are historical alternatives, not current implementation choices. Supabase Auth email confirmation and password recovery redirect URLs still need to be allowlisted in the dashboard. A production SMTP sender has not been selected or configured. Do not expose any Supabase secret/service-role key in the app.
+
 Reviewed 14 November 2026. These are conditional technical directions, not vendor contracts or legal advice. A missing country restriction is not proof that a vendor will onboard an Eswatini-incorporated customer. Confirm company eligibility, local settlement, data processing terms, retention, and device/network behavior directly before production.
 
 ## Identity and email
 
-**Conditional identity candidate: Clerk (`@clerk/expo`).** Clerk documents an Expo integration, with hosted flows usable in Expo Go and native UI requiring a development build. Use Clerk only after it confirms that an Eswatini-based organization can contract, pay, and use the required production features. Authentication does not prove age or UNESWA enrollment. Validate Clerk-issued tokens in the API; keep secret keys server-side. Review the documented Native API/CAPTCHA caveat and add abuse controls.
+**Historical alternative (not selected): Clerk (`@clerk/expo`).** Clerk documents an Expo integration, with hosted flows usable in Expo Go and native UI requiring a development build. Use Clerk only after it confirms that an Eswatini-based organization can contract, pay, and use the required production features. Authentication does not prove age or UNESWA enrollment. Validate Clerk-issued tokens in the API; keep secret keys server-side. Review the documented Native API/CAPTCHA caveat and add abuse controls.
 
 Official references: [Clerk Expo quickstart](https://clerk.com/docs/expo/getting-started/quickstart), [Expo's Clerk guide](https://docs.expo.dev/guides/using-clerk/), [Clerk pricing](https://clerk.com/pricing), [Clerk DPA](https://clerk.com/legal/dpa), [Clerk subprocessors](https://clerk.com/legal/subprocessors).
 
-Auth0 is an alternative with an official Expo/React Native quickstart, but requires a development build and exact callback/deep-link configuration. Confirm the same Eswatini account and feature availability before choosing it. [Auth0 Expo quickstart](https://auth0.com/docs/quickstart/native/react-native-expo), [Auth0 pricing](https://auth0.com/pricing/).
+Auth0 is also a historical alternative, not selected for the current build. [Auth0 Expo quickstart](https://auth0.com/docs/quickstart/native/react-native-expo), [Auth0 pricing](https://auth0.com/pricing/).
 
-Clerk can handle account email flows if selected. For a separate backend email-delivery service, Resend is a technically plausible SMTP provider, with Amazon SES as another option, but Eswatini company onboarding and campus mailbox deliverability are unverified. Do not expose SMTP/API secrets in the app. Supabase Auth + Resend was reviewed as an alternative integrated auth/email stack, but it differs from the repository's existing NestJS target and has no Eswatini region in its published region list; do not combine it with Clerk without an explicit architecture decision.
+Supabase Auth handles account email flows. A production SMTP provider is still required; Resend and Amazon SES are technical candidates, but Eswatini business onboarding and campus mailbox deliverability must be confirmed. Do not expose SMTP/API secrets in the app.
 
 Official references: [Resend + Supabase SMTP](https://resend.com/docs/send-with-supabase-smtp), [Resend pricing](https://resend.com/pricing), [Amazon SES SMTP](https://docs.aws.amazon.com/ses/latest/dg/send-email-smtp.html), [Supabase regions](https://supabase.com/docs/guides/platform/regions).
 
