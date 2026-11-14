@@ -10,6 +10,7 @@ Implemented and deployed:
 - Auth email/password signup, sign-in, email confirmation and password recovery/reset on the feature branch.
 - PKCE and OS-backed SecureStore native session persistence.
 - Owner-only hidden profile creation after authentication.
+- App-level navigation guard keeps authenticated but unverified sessions on the pending-access screen and blocks direct navigation into prototype tabs; email confirmation and password-reset callbacks remain reachable.
 - University of Eswatini and Kwaluseni campus seed data.
 - RLS on public application tables and private verification records.
 - Client direct inserts to likes and Secret Crush revoked.
