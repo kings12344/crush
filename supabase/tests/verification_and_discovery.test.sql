@@ -4,7 +4,7 @@
 
 begin;
 
-select plan(26);
+select plan(28);
 
 select has_table('private', 'verification_records',
   'verification records are stored outside the exposed public schema');
@@ -64,6 +64,24 @@ select ok(not exists (
   where schemaname = 'private'
     and tablename = 'action_rate_limits'
 ), 'rate-limit table has no client policies (intentional default deny)');
+
+select ok(
+  not has_table_privilege('anon', 'private.action_rate_limits', 'SELECT')
+  and not has_table_privilege('authenticated', 'private.action_rate_limits', 'SELECT'),
+  'anonymous and signed-in clients cannot read private rate-limit state');
+
+select ok((
+  select count(*) = 7
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public'
+    and p.proname = any (array[
+      'block_user', 'discover_profiles', 'get_blocked_users',
+      'send_like', 'send_secret_crush', 'submit_report', 'unblock_user'
+    ])
+    and p.prosecdef
+    and coalesce(p.proconfig, array[]::text[]) @> array['search_path=""']
+), 'all seven exposed SECURITY DEFINER RPCs pin an empty search_path');
 
 select ok(not has_table_privilege('authenticated',
   'public.reports', 'INSERT'),
