@@ -14,7 +14,9 @@ permissions:
 
 concurrency:
   group: android-debug-apk-${{ github.ref }}
-  cancel-in-progress: true
+  # Keep an in-progress APK build alive when another commit is pushed.
+  # New commits queue their own build instead of cancelling the current one.
+  cancel-in-progress: false
 
 jobs:
   build:
