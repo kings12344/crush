@@ -29,13 +29,14 @@ Account identity and email; date of birth and age evidence; student verification
 
 ### Supabase Advisor review — 15 November 2026
 
-The live Security Advisor no longer reports a clean/empty result. It currently returns:
+The live Security Advisor currently returns:
 
 - **1 INFO:** RLS is enabled on private.action_rate_limits but no policies exist. This is intentional because the table is private, client schema access/table grants are revoked, and the rate-limit helper is not executable by client roles. Do not add a permissive policy merely to silence this notice.
 - **7 WARN notices:** the seven intended authenticated RPCs (block_user, discover_profiles, get_blocked_users, send_like, send_secret_crush, submit_report, unblock_user) are SECURITY DEFINER functions. A targeted catalog/code review found that each sets an empty search_path, uses fully qualified table/function references, derives the actor from auth.uid(), and is not executable by anon. Authenticated execution is the intended application interface; direct table writes for sensitive actions are restricted. These generic warnings are not proof that the functions are safe: keep their code review and authorization tests as a release gate, and re-review any future SECURITY DEFINER function.
+- The two private SECURITY DEFINER helpers (consume_action_rate_limit and initialize_verification_record) also pin an empty search_path and have no anon/authenticated EXECUTE grants. The former is called only from trusted public RPCs; the latter is trigger-only.
 - The Performance Advisor reports 10 unused-index informational notices. The schema is new and has negligible traffic; do not drop indexes until representative query plans and workload measurements justify it.
 
-The current database review is catalog/code inspection, not a complete penetration test. The hosted project has no test accounts, so two-account behavior, direct API abuse, race conditions and end-to-end authorization have not yet been demonstrated. The committed pgTAP suite contains catalog assertions but has not been run in CI or a local Supabase test stack because pgTAP is not installed in the hosted project.
+The current database review is catalog/code inspection, not a complete penetration test. The hosted project has no test accounts, so two-account behavior, direct API abuse, race conditions and end-to-end authorization have not yet been demonstrated. The committed pgTAP suite now contains 29 catalog assertions but has not been run in CI or a local Supabase test stack because pgTAP is not installed in the hosted project.
 
 These controls are a foundation, not proof of complete authorization. RLS policy behavior and every write path still need adversarial integration tests.
 
