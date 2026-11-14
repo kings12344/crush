@@ -22,6 +22,7 @@ Hosted migrations create:
 - A private `profile-photos` Storage bucket, limited to JPEG, PNG and WebP up to 5 MB.
 - Row Level Security on application tables and verification records.
 - Realtime publication membership for messages.
+- Private per-user rate-limit counters and server-authorized discovery/matching RPCs.
 
 Migration files:
 - `supabase/migrations/20261114175834_initial_crush_core.sql`
@@ -29,8 +30,16 @@ Migration files:
 - `supabase/migrations/20261114180414_lock_profiles_until_verified.sql`
 - `supabase/migrations/20261114180508_deny_client_verification_access.sql`
 - `supabase/migrations/20261114182000_hide_block_relationships.sql`
+- `supabase/migrations/20261114190000_verified_discovery_and_matching.sql`
 
-The migrations are applied to the hosted project. The live audit on 14 November 2026 confirmed RLS is enabled on all 10 public application tables and on `private.verification_records`; the profile-photo bucket is private; client INSERT privileges on likes and Secret Crush are absent; messages are in the Realtime publication; and Supabase Security Advisor returned no security findings. These checks do not replace adversarial authorization tests.
+The hosted migration is applied. The live audit confirms RLS on all 10 public application tables and on private verification/rate-limit tables; the profile-photo bucket is private; direct client INSERT privileges on likes and Secret Crush are absent; and messages are in the Realtime publication.
+
+The latest Supabase Security Advisor run reports:
+- One INFO finding: `private.action_rate_limits` has RLS enabled and no policies. This is intentional default-deny protection; only the narrowly scoped SECURITY DEFINER rate-limit helper accesses it.
+- Three WARN findings: the three public RPCs (`discover_profiles`, `send_like`, `send_secret_crush`) are SECURITY DEFINER and executable by authenticated users. This is intentional because they must enforce checks and write across tables that clients cannot directly modify. Each function derives the actor from `auth.uid()`, uses a fixed empty search path, validates both users, checks both block directions and verification state, and has EXECUTE revoked from PUBLIC and anon. The private rate-limit helper is not executable by API roles.
+- Ten performance INFO findings report indexes unused so far because the database is still empty; do not drop them before real workload measurements.
+
+A SQL smoke test confirmed all three RPCs reject unauthenticated calls and create no rate-limit rows when unauthenticated. This is not a substitute for authenticated two-account tests or adversarial authorization tests.
 
 ## Mobile authentication implementation
 
@@ -45,6 +54,17 @@ The Expo app now includes:
 - A pending-access screen. Signing in does not grant dating/discovery access.
 
 The session store is not yet validated on physical Android and iOS devices. Web sign-in is deliberately disabled until a cookie-backed web session architecture is implemented. A failure to store the native session should be treated as a sign-in failure and tested before launch.
+
+## Discovery and matching RPCs
+
+The hosted database now contains these authenticated RPCs:
+- `discover_profiles(p_mode, p_limit)`: returns only limited safe profile fields for other visible accounts whose age and student statuses are both verified. It excludes the caller, blocked relationships and existing matches. It is rate-limited to 30 calls/minute.
+- `send_like(p_recipient_id)`: inserts a like server-side after checking both users are visible, verified for age and student status, dating-enabled and unblocked. It creates a match and conversation only when the recipient has already liked the caller. Limit: 100/day.
+- `send_secret_crush(p_recipient_id)`: applies the same eligibility/block rules, but stores Secret Crush privately. It creates a match and conversation only after reciprocal Secret Crush. Limit: 10/day.
+
+Clients cannot read Secret Crush rows or create matches/conversations directly. RPC responses disclose only whether a mutual match occurred and its match ID. The app currently has no age/student verification process that can legitimately mark a user verified, so these functions are intentionally fail-closed and discovery remains empty until an approved trusted verification workflow exists.
+
+The RPCs have been added to the feature branch and deployed to the hosted Supabase database. The mobile screens have not yet been wired to call them.
 
 ## Required Supabase Dashboard configuration
 
@@ -77,23 +97,23 @@ The Android GitHub Actions workflow also injects those same public client values
 
 ## Important security boundaries
 
-- Profiles are readable only by their owner. Public discovery is intentionally not exposed yet.
+- Profiles are readable only by their owner through direct table access. Discovery uses the constrained RPC, not broad table SELECT.
 - Profiles can only be created or updated with `visibility = 'hidden'` through the client. A trusted server must explicitly approve and publish a profile after age and student verification.
-- Direct client inserts into likes and Secret Crush are revoked until trusted server-side workflows enforce eligibility, rate limits, mutual-match rules and both directions of blocks.
-- Clients cannot create matches or conversations. Those must be created through trusted server-side logic after eligibility and mutual-like checks.
-- Secret-crush rows are not readable by mobile clients. Sender identities must only be disclosed after an authorized mutual reveal.
+- Direct client inserts into likes and Secret Crush are revoked. Only the constrained RPCs can create them.
+- Clients cannot create matches or conversations. The RPCs create them only after mutual intent and eligibility checks.
+- Secret-crush rows are not readable by mobile clients. Sender identities are not disclosed before reciprocal Secret Crush.
 - Messages are limited to active match participants, and both directions of a block prevent access.
-- Verification records are in a private schema with RLS enabled and an explicit deny policy for `anon` and `authenticated`. They are server-only.
-- The app is not production-ready. Age assurance, UNESWA student verification, moderation, admin tools, data export/deletion and a complete security test suite remain outstanding.
+- Verification records and rate-limit counters are in the private schema, inaccessible to anon/authenticated API roles.
+- The app is not production-ready. Age assurance, UNESWA student verification, moderation, admin tools, data export/deletion and complete authenticated security tests remain outstanding.
 
 ## Remaining implementation
 
 1. Verify public Data API exposure without exposing the private schema.
 2. Complete Supabase Auth redirect and email provider configuration in the dashboard.
 3. Finish the Android PR build and TypeScript checks; resolve any failures.
-4. Test signup, email confirmation, login, password recovery, session persistence and logout on physical Android and iOS devices.
-5. Implement trusted age assurance and a University-approved UNESWA student verification workflow. Accounts must remain hidden and ineligible until both checks are verified.
-6. Add server-side discovery, mutual-like matching, Secret Crush reveal, unmatch, block and report workflows.
-7. Add realtime messaging only after match and block authorization tests pass.
-8. Add moderator workflows, audit trail, account deletion/export and retention controls.
+4. Wire the mobile discovery, like and Secret Crush screens to the deployed RPCs, with graceful handling for no eligible profiles and rate-limit errors.
+5. Select and integrate trusted age assurance and a University-approved UNESWA student verification workflow. Accounts must remain hidden and ineligible until both checks are verified.
+6. Add moderator workflows, audit trail, account deletion/export and retention controls.
+7. Run authenticated two-account tests for reciprocal/non-reciprocal likes, Secret Crush privacy, block in both directions, unmatch, session revocation and rate limits.
+8. Add realtime messaging only after match and block authorization tests pass.
 9. Complete penetration-style RLS/API tests, backups, alerts and the production launch review.
