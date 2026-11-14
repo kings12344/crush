@@ -1,6 +1,6 @@
 # CRUSH Security Baseline and Launch Gate
 
-**Current status: development integration — not cleared for public users or sensitive personal data.** A Supabase project and PostgreSQL schema are deployed. The mobile feature branch includes email/password Auth, PKCE callbacks, a SecureStore-backed session adapter and hidden-profile creation. This code has not yet passed physical-device testing or a full adversarial security review. Age assurance, UNESWA student verification, discovery, trusted matching, production messaging, moderation and account-rights workflows remain incomplete.
+**Current status: development integration — not cleared for public users or sensitive personal data.** A Supabase project and PostgreSQL schema are deployed. The mobile feature branch includes email/password Auth, PKCE callbacks, a SecureStore-backed session adapter and hidden-profile creation. This code has not yet passed physical-device testing or a full adversarial security review. Age assurance, UNESWA student verification, production messaging, moderation and account-rights workflows remain incomplete.
 
 ## Protect these assets
 
@@ -22,8 +22,8 @@ Account identity and email; date of birth and age evidence; student verification
 - private.verification_records has RLS enabled and an explicit deny policy for anon and authenticated; it is server-only.
 - private.action_rate_limits has RLS enabled, no client policy, and no client table grants. This is intentional default-deny: only trusted database functions should update rate-limit state.
 - Profiles are readable only by their owner. Client profile insert/update policies require visibility = hidden.
-- Direct client INSERT grants on likes and secret_crushes are revoked until trusted server workflows exist.
-- Clients cannot create matches or conversations.
+- Direct client INSERT grants on likes and secret_crushes are revoked. User discovery and dating actions go through authenticated, rate-limited RPCs that validate verification state, profile visibility, dating preferences and both block directions.
+- Clients cannot create matches or conversations directly; guarded mutual-action RPCs create them only after reciprocal interest.
 - Message reads/inserts require match participation and no block in either direction.
 - The profile-photos Storage bucket is private, limited to JPEG/PNG/WebP and 5 MiB, and owner-folder scoped. This does not replace server-side content inspection before any future public delivery.
 
@@ -57,7 +57,7 @@ These controls are a foundation, not proof of complete authorization. RLS policy
 - The AuthContext initialization now ignores a late getSession() result if an auth-state event has already arrived, preventing a stale initial read from overwriting a newer sign-in/sign-out/token event. TypeScript/CI verification is still required after this change.
 - The mobile app routes signed-in users to a pending-access screen. It does not unlock discovery or matching based on client-supplied information.
 - Profiles created from Auth are hidden. No trusted age/student verification workflow exists yet.
-- Likes and Secret Crush inserts are blocked for mobile clients until server-side eligibility and anti-abuse rules are implemented.
-- Match, conversation, realtime chat, moderation, admin, account deletion and data export workflows are incomplete.
+- Direct table writes for likes and Secret Crush are disabled; authenticated RPCs implement guarded discovery, like and mutual Secret Crush actions. Two-account adversarial tests remain required before production use.
+- Reporting and blocking have authenticated RPCs with server-derived actor identity and rate limits. The report review queue, moderation operations, account deletion/export and full messaging experience are incomplete.
 - Discovery/reels/inbox sample interactions and four privacy-preview switches remain local prototype features; they do not affect a real account or server.
 - The SQL migrations are tracked under supabase/migrations/ and have been applied to the CRUSH Supabase project.
