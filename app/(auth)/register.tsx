@@ -57,7 +57,7 @@ export default function Register() {
 
       if (data.session && data.user) {
         await ensureProfile(data.user);
-        router.replace('/(auth)/pending');
+        router.replace('/pending');
         return;
       }
 
