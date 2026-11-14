@@ -11,15 +11,15 @@ export default function Welcome() {
       <Text style={styles.tag}>MEET YOUR PEOPLE. FIND YOUR PERSON.</Text>
       <Text style={styles.description}>A campus community for real friendships, meaningful connections and moments worth sharing.</Text>
       <Text style={styles.notice}>
-        Prototype onboarding only. Secure sign-in and verification are not connected; no account is created and no details are submitted.
+        Create an account with a verified email. Age and UNESWA student checks are separate and must be approved before discovery is unlocked.
       </Text>
       <Pressable accessibilityRole="button" style={styles.primary} onPress={() => router.push('/(auth)/register')}>
-        <Text style={styles.primaryText}>View account setup</Text>
+        <Text style={styles.primaryText}>Create account</Text>
       </Pressable>
       <Pressable accessibilityRole="button" style={styles.secondary} onPress={() => router.push('/(auth)/login')}>
-        <Text style={styles.secondaryText}>Sign-in status</Text>
+        <Text style={styles.secondaryText}>I already have an account</Text>
       </Pressable>
-      <Text style={styles.legal}>CRUSH is intended for adults aged 18 and above. This prototype cannot verify age or student status.</Text>
+      <Text style={styles.legal}>CRUSH is intended for adults aged 18 and above. Account creation does not establish age or student eligibility.</Text>
     </Screen>
   );
 }
@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
   tag: { fontSize: 10, fontWeight: '900', letterSpacing: 1.5, color: colors.pink, marginTop: 6, textAlign: 'center' },
   description: { fontSize: 15, lineHeight: 23, textAlign: 'center', color: colors.muted, marginVertical: 24 },
   notice: { fontSize: 12, lineHeight: 18, color: colors.black, textAlign: 'center', backgroundColor: colors.blush, padding: 13, borderRadius: 12 },
-  primary: { width: '100%', backgroundColor: colors.pink, padding: 17, borderRadius: 15, alignItems: 'center', marginTop: 8 },
+  primary: { width: '100%', backgroundColor: colors.pink, padding: 17, borderRadius: 15, alignItems: 'center', marginTop: 18 },
   primaryText: { color: 'white', fontWeight: '900', fontSize: 16 },
   secondary: { width: '100%', padding: 16, borderRadius: 15, borderWidth: 1, borderColor: colors.border, alignItems: 'center', marginTop: 12 },
   secondaryText: { fontWeight: '800', color: colors.black },
