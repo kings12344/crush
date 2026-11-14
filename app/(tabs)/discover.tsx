@@ -112,6 +112,27 @@ export default function Discover() {
     }
   };
 
+  const blockProfile = (profile: Profile) => {
+    Alert.alert('Block this account?', profile.display_name + ' will no longer appear in your discovery, and the server will prevent messages between your accounts. You can unblock them in Safety Center.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Block account', style: 'destructive', onPress: async () => {
+        setActing(profile.id);
+        try {
+          assertSupabaseConfigured();
+          const { error: requestError } = await supabase.rpc('block_user', { p_blocked_user_id: profile.id });
+          if (requestError) throw requestError;
+          setProfiles((current) => current.filter((item) => item.id !== profile.id));
+          setDismissed((current) => current.filter((id) => id !== profile.id));
+          Alert.alert('Account blocked', 'This account has been blocked. You can manage blocked accounts in Safety Center.');
+        } catch {
+          Alert.alert('Could not block account', 'Please check your connection and try again.');
+        } finally {
+          setActing(null);
+        }
+      }},
+    ]);
+  };
+
   const pass = (profile: Profile) => {
     setDismissed((current) => [...current, profile.id]);
   };
@@ -174,6 +195,9 @@ export default function Discover() {
           )}
           <Pressable accessibilityRole="button" disabled={acting !== null || submittingReport} onPress={() => { setReportTarget(profile); setReportCategory('harassment'); setReportDetails(''); }}>
             <Text style={s.reportLink}>Report this profile</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" disabled={acting !== null || submittingReport} onPress={() => blockProfile(profile)}>
+            <Text style={s.reportLink}>Block this account</Text>
           </Pressable>
         </Panel>
       )) : (
