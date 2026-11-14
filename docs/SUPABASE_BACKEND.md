@@ -30,7 +30,7 @@ Migration files:
 - `supabase/migrations/20261114180414_lock_profiles_until_verified.sql`
 - `supabase/migrations/20261114180508_deny_client_verification_access.sql`
 
-The migrations are applied to the hosted project. Supabase's security advisor now reports an informational `RLS Enabled No Policy` lint only if its cache has not refreshed; the explicit deny policy is intended to make client access impossible. The database has not yet been through a complete adversarial RLS test suite.
+The migrations are applied to the hosted project. After adding an explicit deny policy to the private verification table, Supabase Security Advisor reports no findings. The database has not yet been through a complete adversarial RLS test suite.
 
 ## Mobile authentication implementation
 
@@ -81,7 +81,7 @@ The Android GitHub Actions workflow also injects those same public client values
 
 1. Complete Supabase Auth redirect and email provider configuration in the dashboard.
 2. Run the Android PR build and TypeScript checks; resolve any failures.
-3. Test signup, email confirmation, login, password recovery, session persistence and logout on physical Android and iOS devices.
+4. Test signup, email confirmation, login, password recovery, session persistence and logout on physical Android and iOS devices.
 5. Implement trusted age assurance and a University-approved UNESWA student verification workflow. Accounts must remain hidden and ineligible until both checks are verified.
 6. Add server-side discovery, mutual-like matching, Secret Crush reveal, unmatch, block and report workflows.
 7. Add realtime messaging only after match and block authorization tests pass.
