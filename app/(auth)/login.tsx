@@ -1,51 +1,131 @@
+import { useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text } from 'react-native';
 import { Heading } from '../../components/Heading';
 import { Panel } from '../../components/Panel';
 import { Screen } from '../../components/Screen';
 import { colors } from '../../constants/theme';
+import { ensureProfile } from '../../lib/auth-profile';
+import { assertSupabaseConfigured, supabase } from '../../lib/supabase';
 
 export default function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+
+  const signIn = async () => {
+    setNotice('');
+    if (!email.trim() || !password) {
+      setNotice('Enter your email address and password.');
+      return;
+    }
+    setBusy(true);
+    try {
+      assertSupabaseConfigured();
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+      if (error || !data.user) {
+        setNotice('Unable to sign in. Check your details and confirm your email address, then try again.');
+        return;
+      }
+      await ensureProfile(data.user);
+      router.replace('/(auth)/pending');
+    } catch {
+      setNotice('CRUSH could not complete sign-in. Check your connection and try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resetPassword = async () => {
+    setNotice('');
+    if (!email.trim()) {
+      setNotice('Enter your email address first. We will send a recovery link if an account can receive one.');
+      return;
+    }
+    setBusy(true);
+    try {
+      assertSupabaseConfigured();
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+        redirectTo: 'crush://auth/reset-password',
+      });
+      setNotice(error
+        ? 'We could not send a recovery email. Check the address and try again.'
+        : 'If this address has a CRUSH account, a password recovery link will be sent.');
+    } catch {
+      setNotice('Password recovery is temporarily unavailable. Try again later.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <Screen>
-      <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()}>
+      <Pressable accessibilityRole="button" onPress={() => router.replace('/(auth)/welcome')}>
         <Text style={styles.back}>‹ Back</Text>
       </Pressable>
-      <Heading eyebrow="ACCOUNT ACCESS" title="Sign in" subtitle="Use CRUSH only after secure account services are connected." />
-
+      <Heading eyebrow="WELCOME BACK" title="Sign in" subtitle="Sign in to your CRUSH account." />
       <Panel>
-        <Text style={styles.status}>Sign-in is not configured</Text>
-        <Text style={styles.body}>
-          CRUSH is not connected to an identity provider or trusted backend. You cannot sign in or recover an account from this build.
-        </Text>
-        <Text style={styles.body}>
-          No email or password is requested, transmitted, or saved here. Never enter a password you use elsewhere.
-        </Text>
+        <Text style={styles.label}>Email address</Text>
+        <TextInput
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          autoComplete="email"
+          keyboardType="email-address"
+          textContentType="emailAddress"
+          placeholder="you@example.com"
+          placeholderTextColor="#9A9097"
+          style={styles.input}
+          editable={!busy}
+        />
+        <Text style={styles.label}>Password</Text>
+        <TextInput
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          autoCapitalize="none"
+          autoComplete="current-password"
+          textContentType="password"
+          placeholder="Your password"
+          placeholderTextColor="#9A9097"
+          style={styles.input}
+          editable={!busy}
+          onSubmitEditing={signIn}
+          returnKeyType="go"
+        />
+        {notice ? <Text accessibilityLiveRegion="polite" style={styles.notice}>{notice}</Text> : null}
+        <Pressable accessibilityRole="button" disabled={busy} style={styles.primary} onPress={signIn}>
+          {busy ? <ActivityIndicator color="white" /> : <Text style={styles.primaryText}>Sign in</Text>}
+        </Pressable>
+        <Pressable accessibilityRole="button" disabled={busy} onPress={resetPassword} style={styles.forgot}>
+          <Text style={styles.link}>Forgot password?</Text>
+        </Pressable>
       </Panel>
-
-      <Panel>
-        <Text style={styles.step}>What must be connected first</Text>
-        <Text style={styles.body}>• A supported identity provider with production account access.</Text>
-        <Text style={styles.body}>• A server that validates provider sessions and enforces account eligibility.</Text>
-        <Text style={styles.body}>• Secure recovery, session revocation, and abuse protections.</Text>
-      </Panel>
-
-      <Pressable accessibilityRole="button" style={styles.primary} onPress={() => router.push('/(auth)/register')}>
-        <Text style={styles.primaryText}>View account setup</Text>
-      </Pressable>
-      <Pressable accessibilityRole="button" onPress={() => router.replace('/(auth)/welcome')}>
-        <Text style={styles.link}>Back to welcome</Text>
-      </Pressable>
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>New to CRUSH?</Text>
+        <Pressable onPress={() => router.push('/(auth)/register')}>
+          <Text style={styles.link}>Create an account</Text>
+        </Pressable>
+      </View>
+      <Text style={styles.disclaimer}>Signing in does not bypass CRUSH's 18+ age and UNESWA student eligibility checks.</Text>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   back: { fontSize: 17, color: colors.pink, fontWeight: '800', marginBottom: 8 },
-  status: { color: colors.pink, fontSize: 17, fontWeight: '900' },
-  step: { color: colors.black, fontWeight: '900' },
-  body: { color: colors.muted, fontSize: 13, lineHeight: 20 },
-  primary: { backgroundColor: colors.pink, padding: 16, borderRadius: 14, alignItems: 'center' },
-  primaryText: { color: 'white', fontWeight: '900' },
-  link: { textAlign: 'center', color: colors.pink, fontWeight: '800', padding: 12 },
+  label: { color: colors.black, fontSize: 13, fontWeight: '800', marginTop: 8 },
+  input: { borderWidth: 1, borderColor: colors.border, backgroundColor: '#FFF8FB', color: colors.black, padding: 14, borderRadius: 12, marginTop: 7, marginBottom: 8 },
+  primary: { backgroundColor: colors.pink, padding: 16, borderRadius: 14, alignItems: 'center', marginTop: 12, minHeight: 52, justifyContent: 'center' },
+  primaryText: { color: 'white', fontWeight: '900', fontSize: 16 },
+  forgot: { padding: 12, alignItems: 'center' },
+  link: { color: colors.pink, fontWeight: '900' },
+  notice: { color: colors.pinkDark, backgroundColor: colors.blush, padding: 11, borderRadius: 10, lineHeight: 18, marginTop: 8 },
+  footer: { flexDirection: 'row', gap: 6, justifyContent: 'center', alignItems: 'center', padding: 12 },
+  footerText: { color: colors.muted },
+  disclaimer: { textAlign: 'center', color: colors.muted, fontSize: 11, lineHeight: 17 },
 });
