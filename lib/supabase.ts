@@ -7,6 +7,7 @@ const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '';
 
 export const isSupabaseConfigured =
+  Platform.OS !== 'web' &&
   /^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(supabaseUrl) &&
   (supabasePublishableKey.startsWith('sb_publishable_') ||
     supabasePublishableKey.startsWith('eyJ'));
@@ -96,15 +97,9 @@ const secureSessionStorage = {
 };
 
 const webStorage = {
-  async getItem(key: string) {
-    return typeof window === 'undefined' ? null : window.localStorage.getItem(key);
-  },
-  async setItem(key: string, value: string) {
-    if (typeof window !== 'undefined') window.localStorage.setItem(key, value);
-  },
-  async removeItem(key: string) {
-    if (typeof window !== 'undefined') window.localStorage.removeItem(key);
-  },
+  async getItem(_key: string) { return null; },
+  async setItem(_key: string, _value: string) {},
+  async removeItem(_key: string) {},
 };
 
 export const supabase = createClient(
