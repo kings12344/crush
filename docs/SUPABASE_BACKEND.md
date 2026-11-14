@@ -24,14 +24,17 @@ Hosted migrations create:
 - Realtime publication membership for messages.
 - Private per-user rate-limit counters and server-authorized discovery/matching RPCs.
 
-Migration files:
+Migration files (filenames match the versions already recorded in the hosted Supabase migration history):
 - supabase/migrations/20261114175834_initial_crush_core.sql
 - supabase/migrations/20261114175851_realtime_messages_and_indexes.sql
 - supabase/migrations/20261114180414_lock_profiles_until_verified.sql
 - supabase/migrations/20261114180508_deny_client_verification_access.sql
-- supabase/migrations/20261114182000_hide_block_relationships.sql
-- supabase/migrations/20261114190000_verified_discovery_and_matching.sql
-- supabase/migrations/20261114191000_initialize_verification_status.sql
+- supabase/migrations/20261114181907_hide_block_relationships.sql
+- supabase/migrations/20261114185202_verified_discovery_and_matching.sql
+- supabase/migrations/20261114185342_initialize_verification_status.sql
+- supabase/migrations/20261114190636_require_visible_discovery_caller.sql
+- supabase/migrations/20261114191122_secure_report_submission.sql
+- supabase/migrations/20261114191649_secure_block_controls.sql
 
 An Auth trigger creates a private pending/pending verification record automatically for every new account and backfills existing Auth users. Clients cannot write or promote these statuses. The hosted migrations are applied. Live catalog checks confirm RLS on all 10 public application tables and on private verification/rate-limit tables; the profile-photo bucket is private; direct client INSERT privileges on likes and Secret Crush are absent; and messages are in the Realtime publication.
 
