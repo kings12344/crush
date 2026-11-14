@@ -8,7 +8,6 @@ Updated 14 November 2026.
 - Project reference: `dtlbpkcaojctamelogbv`
 - Region: `eu-west-1` (Europe West)
 - Project URL: `https://dtlbpkcaojctamelogbv.supabase.co`
-- Organization: `kings12344's Org`
 
 The mobile client uses the Supabase **publishable** key only. Never place a secret key, legacy service-role key, database password, or vendor secret in Expo public variables or Git.
 
@@ -29,8 +28,9 @@ Migration files:
 - `supabase/migrations/20261114175851_realtime_messages_and_indexes.sql`
 - `supabase/migrations/20261114180414_lock_profiles_until_verified.sql`
 - `supabase/migrations/20261114180508_deny_client_verification_access.sql`
+- `supabase/migrations/20261114182000_hide_block_relationships.sql`
 
-The migrations are applied to the hosted project. After adding an explicit deny policy to the private verification table, Supabase Security Advisor reports no findings. The database has not yet been through a complete adversarial RLS test suite.
+The migrations are applied to the hosted project. The live audit on 14 November 2026 confirmed RLS is enabled on all 10 public application tables and on `private.verification_records`; the profile-photo bucket is private; client INSERT privileges on likes and Secret Crush are absent; messages are in the Realtime publication; and Supabase Security Advisor returned no security findings. These checks do not replace adversarial authorization tests.
 
 ## Mobile authentication implementation
 
@@ -48,13 +48,22 @@ The session store is not yet validated on physical Android and iOS devices. Web 
 
 ## Required Supabase Dashboard configuration
 
-Open **Authentication → URL Configuration** in the Supabase Dashboard:
+### 1. Data API schema exposure
 
+The project was created after Supabase's 30 October 2026 change that stopped automatically exposing new public tables through the Data API. Do not assume that RLS or SQL grants automatically expose the schema.
+
+In **Project Settings → API → Data API settings**, verify that the `public` schema is exposed because this Expo client uses `supabase-js` and the Data API. Keep the exposed schema list minimal. All exposed application tables must retain RLS and least-privilege grants. Do not expose the `private` schema or verification records. If the public schema is not exposed, Auth may still work while profile/database requests fail.
+
+### 2. Authentication redirect URLs
+
+Open **Authentication → URL Configuration**:
 1. Keep the Site URL set to a safe HTTPS website you control (or the dashboard's temporary default while testing).
 2. Add these exact values under Additional Redirect URLs:
    - `crush://auth/confirmed`
    - `crush://auth/reset-password`
 3. Save the settings.
+
+### 3. Email provider
 
 Open **Authentication → Providers → Email** and confirm email/password sign-up is enabled and email confirmation is required. Do not disable confirmation for production.
 
@@ -79,8 +88,9 @@ The Android GitHub Actions workflow also injects those same public client values
 
 ## Remaining implementation
 
-1. Complete Supabase Auth redirect and email provider configuration in the dashboard.
-2. Run the Android PR build and TypeScript checks; resolve any failures.
+1. Verify public Data API exposure without exposing the private schema.
+2. Complete Supabase Auth redirect and email provider configuration in the dashboard.
+3. Finish the Android PR build and TypeScript checks; resolve any failures.
 4. Test signup, email confirmation, login, password recovery, session persistence and logout on physical Android and iOS devices.
 5. Implement trusted age assurance and a University-approved UNESWA student verification workflow. Accounts must remain hidden and ineligible until both checks are verified.
 6. Add server-side discovery, mutual-like matching, Secret Crush reveal, unmatch, block and report workflows.
