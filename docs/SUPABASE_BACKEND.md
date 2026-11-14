@@ -28,8 +28,9 @@ Migration files:
 - `supabase/migrations/20261114175834_initial_crush_core.sql`
 - `supabase/migrations/20261114175851_realtime_messages_and_indexes.sql`
 - `supabase/migrations/20261114180414_lock_profiles_until_verified.sql`
+- `supabase/migrations/20261114180508_deny_client_verification_access.sql`
 
-The migrations are applied to the hosted project. The database has not yet been through a complete adversarial RLS test suite.
+The migrations are applied to the hosted project. Supabase's security advisor now reports an informational `RLS Enabled No Policy` lint only if its cache has not refreshed; the explicit deny policy is intended to make client access impossible. The database has not yet been through a complete adversarial RLS test suite.
 
 ## Mobile authentication implementation
 
@@ -43,7 +44,7 @@ The Expo app now includes:
 - Automatic creation of a private, hidden profile after the user obtains a session.
 - A pending-access screen. Signing in does not grant dating/discovery access.
 
-The session store is not yet validated on physical Android and iOS devices. A failure to store the session should be treated as a sign-in failure and tested before launch.
+The session store is not yet validated on physical Android and iOS devices. Web sign-in is deliberately disabled until a cookie-backed web session architecture is implemented. A failure to store the native session should be treated as a sign-in failure and tested before launch.
 
 ## Required Supabase Dashboard configuration
 
@@ -73,7 +74,7 @@ The Android GitHub Actions workflow also injects those same public client values
 - Clients cannot create matches or conversations. Those must be created through trusted server-side logic after eligibility and mutual-like checks.
 - Secret-crush rows are not readable by mobile clients. Sender identities must only be disclosed after an authorized mutual reveal.
 - Messages are limited to active match participants, and both directions of a block prevent access.
-- Verification records are in a private schema with RLS enabled and no client policies. They are server-only.
+- Verification records are in a private schema with RLS enabled and an explicit deny policy for `anon` and `authenticated`. They are server-only.
 - The app is not production-ready. Age assurance, UNESWA student verification, moderation, admin tools, data export/deletion and a complete security test suite remain outstanding.
 
 ## Remaining implementation
@@ -81,8 +82,8 @@ The Android GitHub Actions workflow also injects those same public client values
 1. Complete Supabase Auth redirect and email provider configuration in the dashboard.
 2. Run the Android PR build and TypeScript checks; resolve any failures.
 3. Test signup, email confirmation, login, password recovery, session persistence and logout on physical Android and iOS devices.
-4. Implement trusted age assurance and a University-approved UNESWA student verification workflow. Accounts must remain hidden and ineligible until both checks are verified.
-5. Add server-side discovery, mutual-like matching, Secret Crush reveal, unmatch, block and report workflows.
-6. Add realtime messaging only after match and block authorization tests pass.
-7. Add moderator workflows, audit trail, account deletion/export and retention controls.
-8. Complete penetration-style RLS/API tests, backups, alerts and the production launch review.
+5. Implement trusted age assurance and a University-approved UNESWA student verification workflow. Accounts must remain hidden and ineligible until both checks are verified.
+6. Add server-side discovery, mutual-like matching, Secret Crush reveal, unmatch, block and report workflows.
+7. Add realtime messaging only after match and block authorization tests pass.
+8. Add moderator workflows, audit trail, account deletion/export and retention controls.
+9. Complete penetration-style RLS/API tests, backups, alerts and the production launch review.
