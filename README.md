@@ -12,7 +12,7 @@ CRUSH is a student social discovery app for users aged 18+, initially planned fo
 ## Run locally
 
 1. Install Node.js LTS.
-2. Run `npm install`.
+2. Run `npm ci`.
 3. Run `npm run typecheck`.
 4. Run `npx expo start` and launch on a simulator/device.
 
