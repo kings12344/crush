@@ -129,17 +129,23 @@ export default function Discover() {
             </View>
           </View>
           {profile.bio ? <Text style={s.bio}>{profile.bio}</Text> : null}
-          <View style={s.actions}>
-            <Pressable accessibilityRole="button" disabled={acting !== null} style={s.pass} onPress={() => pass(profile)}>
-              <Text style={s.passText}>Pass</Text>
-            </Pressable>
-            <Pressable accessibilityRole="button" disabled={acting !== null} style={s.like} onPress={() => void act('Like', profile)}>
-              {acting === profile.id ? <ActivityIndicator color="white" /> : <Text style={s.likeText}>♡  Like</Text>}
-            </Pressable>
-          </View>
-          <Pressable accessibilityRole="button" disabled={acting !== null} onPress={() => void act('Secret Crush', profile)}>
-            <Text style={s.secret}>Send a Secret Crush 💌</Text>
-          </Pressable>
+          {mode === 'Dating' ? (
+            <>
+              <View style={s.actions}>
+                <Pressable accessibilityRole="button" disabled={acting !== null} style={s.pass} onPress={() => pass(profile)}>
+                  <Text style={s.passText}>Pass</Text>
+                </Pressable>
+                <Pressable accessibilityRole="button" disabled={acting !== null} style={s.like} onPress={() => void act('Like', profile)}>
+                  {acting === profile.id ? <ActivityIndicator color="white" /> : <Text style={s.likeText}>♡  Like</Text>}
+                </Pressable>
+              </View>
+              <Pressable accessibilityRole="button" disabled={acting !== null} onPress={() => void act('Secret Crush', profile)}>
+                <Text style={s.secret}>Send a Secret Crush 💌</Text>
+              </Pressable>
+            </>
+          ) : (
+            <Text style={s.tip}>Friend requests are not available yet. Browsing does not send a request.</Text>
+          )}
         </Panel>
       )) : (
         <Panel>
