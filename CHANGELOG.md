@@ -1,5 +1,12 @@
 # Changelog
 
+## V3.2 — SDK 58 maintenance and local preview preferences
+- Migrated the Expo project sequentially through SDK 56 and SDK 57 to SDK 58; replaced legacy splash configuration with the supported splash-screen plugin and kept the existing background color.
+- Repaired the lockfile from a clean SDK 58 dependency tree without `--force` or `--legacy-peer-deps`, added the direct Worklets peer, and removed the deprecated TypeScript `baseUrl` option.
+- Added local-only persistence for four non-sensitive privacy-preview switches. They are not linked to an account and do not enforce or synchronize real privacy preferences.
+- Validation: clean `npm ci`, TypeScript, Expo install check, Expo Doctor (20/20), Expo config, and Expo Web export pass. `npm audit` still reports 3 moderate advisories; native iOS/Android builds and device-only behavior are not verified.
+- No backend, authentication, payment, moderation, verification, or media/call provider has been connected. This change is not production approval.
+
 ## V3.1 — Full implementation planning foundation
 - Added a staged roadmap for the product/backend gaps documented in the prototype.
 - Added a provider shortlist with explicit Eswatini eligibility, credentials, and operational validation gates.

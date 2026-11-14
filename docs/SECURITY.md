@@ -29,9 +29,9 @@ Account identity and email; date of birth and age evidence; student verification
 
 ## Current implementation in this project
 
-- **Dependency audit is not clean (2026-11-11):** `npm audit --omit=dev` reports 17 advisories (5 high, 11 moderate, 1 low; no critical). Findings include transitive Expo/Expo Router and utility-package advisories. A non-breaking `npm audit fix` did not resolve them; npm's full fix plan requires an Expo/Expo Router SDK 58 major migration. Do not ship a production build until the SDK migration is planned, upgraded, tested on iOS/Android/web, and the audit is rerun. Do not hide this with an audit-level threshold or blindly force the upgrade.
+- **Dependency audit remains open (2026-11-14):** After moving to Expo SDK 58.0.25 and regenerating the lockfile, `npm audit` reports 3 moderate advisories and no high or critical findings. The affected packages include Expo, Expo fingerprinting, and minimatch. The audit's automatic remediation requires a major version change; it was not forced. Re-run the audit after a compatible upstream fix. Do not ship until remaining findings are resolved or explicitly risk-accepted, and native builds/device paths are tested.
 - Registration now normalizes/checks email syntax, validates real calendar dates and 18+ locally, adds a password confirmation, sets native text-content hints, and uses a stronger minimum password policy for demo UX. It still creates no account and must not be treated as server-side security.
 - Login explicitly warns against entering real credentials.
 - Discovery actions are local-only, labeled as a preview, and include a report/hide preview action.
-- Profile privacy switches are illustrative and not persisted. A safety center explains non-connected controls and practical boundaries.
+- Profile privacy-preview switches save four non-sensitive boolean values on the current device only. They do not change a real profile or account, sync to a server, or enforce visibility. This AsyncStorage value is not for credentials, identity evidence, or other secrets. A safety center explains non-connected controls and practical boundaries.
 - The SQL schema uses an external auth subject instead of a local password hash, adds constraints and indexes, and lists authorization requirements. It is a reference schema, not a migration ready to apply to an existing live database.
