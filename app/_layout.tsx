@@ -9,21 +9,30 @@ function RootNavigator() {
 
   useEffect(() => {
     if (loading) return;
+
     const root = segments[0];
-        if (!session && (root === '(tabs)' || root === 'pending')) {
+    const isPendingScreen = root === 'pending';
+    const isAuthCallback = root === 'auth';
+
+    if (!session && (root === '(tabs)' || isPendingScreen)) {
       router.replace('/(auth)/welcome');
       return;
     }
 
-    if (session && root === '(auth)') {
+    // Until trusted age + student verification and a server-side eligibility
+    // gate exist, signed-in users must not reach prototype tabs via deep links.
+    // Keep email confirmation and password-reset callbacks reachable.
+    if (session && !isPendingScreen && !isAuthCallback) {
       router.replace('/pending');
     }
   }, [loading, session?.user.id, segments]);
 
-  return <>
-    <StatusBar style="dark" />
-    <Stack screenOptions={{ headerShown: false }} />
-  </>;
+  return (
+    <>
+      <StatusBar style="dark" />
+      <Stack screenOptions={{ headerShown: false }} />
+    </>
+  );
 }
 
 export default function RootLayout() {
