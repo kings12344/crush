@@ -1,59 +1,88 @@
-# CRUSH Supabase backend foundation
+# CRUSH Supabase backend
 
-Created 14 November 2026.
+Updated 14 November 2026.
 
-## Project
+## Supabase project
 
-- Supabase project: `CRUSH`
+- Project: `CRUSH`
 - Project reference: `dtlbpkcaojctamelogbv`
 - Region: `eu-west-1` (Europe West)
 - Project URL: `https://dtlbpkcaojctamelogbv.supabase.co`
 - Organization: `kings12344's Org`
 
-Only the project URL and publishable key belong in the mobile app environment. Never put a Supabase secret key, legacy service-role key, database password, or provider secret in Expo public variables or Git.
+The mobile client uses the Supabase **publishable** key only. Never place a secret key, legacy service-role key, database password, or vendor secret in Expo public variables or Git.
 
-## Database foundation applied
+## Database foundation
 
-The hosted database currently contains:
+Hosted migrations create:
 - University of Eswatini and Kwaluseni campus seed records.
-- Profiles linked directly to Supabase Auth users.
-- Likes, secret-crush requests, matches, conversations and messages.
+- Profiles linked to Supabase Auth users.
+- Likes, Secret Crush, matches, conversations and messages.
 - Blocks and user-submitted reports.
-- A private verification status table.
-- A private `profile-photos` Storage bucket, limited to JPEG, PNG and WebP uploads up to 5 MB.
-- RLS policies on all public application tables.
-- Realtime publication membership for the messages table.
+- Private age/student verification status records.
+- A private `profile-photos` Storage bucket, limited to JPEG, PNG and WebP up to 5 MB.
+- Row Level Security on application tables and verification records.
+- Realtime publication membership for messages.
 
-The initial schema is tracked in `supabase/migrations/20261114175834_initial_crush_core.sql`. A follow-up hosted migration added supporting indexes and enabled Realtime publication for messages.
+Migration files:
+- `supabase/migrations/20261114175834_initial_crush_core.sql`
+- `supabase/migrations/20261114175851_realtime_messages_and_indexes.sql`
+- `supabase/migrations/20261114180414_lock_profiles_until_verified.sql`
+
+The migrations are applied to the hosted project. The database has not yet been through a complete adversarial RLS test suite.
+
+## Mobile authentication implementation
+
+The Expo app now includes:
+- Pinned `@supabase/supabase-js` v2.119.0 and React Native URL polyfill v4.0.0.
+- Expo SecureStore-backed session persistence, split into small encrypted chunks to accommodate platform storage limits.
+- PKCE auth flow, automatic token refresh while the app is foregrounded, and auth-state routing.
+- Email/password registration and sign-in.
+- Email confirmation callback.
+- Password recovery and password update callback.
+- Automatic creation of a private, hidden profile after the user obtains a session.
+- A pending-access screen. Signing in does not grant dating/discovery access.
+
+The session store is not yet validated on physical Android and iOS devices. A failure to store the session should be treated as a sign-in failure and tested before launch.
+
+## Required Supabase Dashboard configuration
+
+Open **Authentication → URL Configuration** in the Supabase Dashboard:
+
+1. Keep the Site URL set to a safe HTTPS website you control (or the dashboard's temporary default while testing).
+2. Add these exact values under Additional Redirect URLs:
+   - `crush://auth/confirmed`
+   - `crush://auth/reset-password`
+3. Save the settings.
+
+Open **Authentication → Providers → Email** and confirm email/password sign-up is enabled and email confirmation is required. Do not disable confirmation for production.
+
+Supabase's default email sender is rate-limited and is not suitable for a public launch. Configure a production SMTP provider, sender domain, SPF/DKIM/DMARC and delivery monitoring before inviting users. The app should be tested with real devices and email addresses you control.
+
+## Environment
+
+Copy `.env.example` to `.env` for local development. The example includes the public project URL and publishable key. The `.env` file is ignored by Git.
+
+The Android GitHub Actions workflow also injects those same public client values so its test APK can reach this project. A publishable key is intended to be present in a mobile binary; database security depends on RLS and server-side authorization, not key secrecy.
 
 ## Important security boundaries
 
-- Profiles are currently readable/writable only by their owner. Public discovery is intentionally not exposed yet.
-- Clients cannot create matches or conversations. That must happen through trusted server-side logic after eligibility, mutual-like and block checks.
+- Profiles are readable only by their owner. Public discovery is intentionally not exposed yet.
+- Profiles can only be created or updated with `visibility = 'hidden'` through the client. A trusted server must explicitly approve and publish a profile after age and student verification.
+- Direct client inserts into likes and Secret Crush are revoked until trusted server-side workflows enforce eligibility, rate limits, mutual-match rules and both directions of blocks.
+- Clients cannot create matches or conversations. Those must be created through trusted server-side logic after eligibility and mutual-like checks.
 - Secret-crush rows are not readable by mobile clients. Sender identities must only be disclosed after an authorized mutual reveal.
 - Messages are limited to active match participants, and both directions of a block prevent access.
-- Verification records are not granted to the mobile roles. Provider review and staff tooling are not implemented.
-- The mobile app is not connected to this project yet. Auth flows, app SDK installation, signup/profile creation and session routing remain to be implemented.
-
-## Setup variables
-
-Create a local `.env` from `.env.example` and set:
-- `EXPO_PUBLIC_SUPABASE_URL`
-- `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-
-The publishable key is intended for client use and is protected by RLS. Do not add real credentials to this repository.
+- Verification records are in a private schema with RLS enabled and no client policies. They are server-only.
+- The app is not production-ready. Age assurance, UNESWA student verification, moderation, admin tools, data export/deletion and a complete security test suite remain outstanding.
 
 ## Remaining implementation
 
-1. Configure Supabase Auth email settings, redirect URLs and abuse protections.
-2. Add the pinned Supabase JS client and React Native URL/session dependencies; regenerate and commit `package-lock.json`.
-3. Connect registration, login, logout, password recovery and session handling.
-4. Add a trusted onboarding path for age assurance and UNESWA student verification. Until approved verification is complete, accounts must remain ineligible for discovery and matching.
+1. Complete Supabase Auth redirect and email provider configuration in the dashboard.
+2. Run the Android PR build and TypeScript checks; resolve any failures.
+3. Test signup, email confirmation, login, password recovery, session persistence and logout on physical Android and iOS devices.
+4. Implement trusted age assurance and a University-approved UNESWA student verification workflow. Accounts must remain hidden and ineligible until both checks are verified.
 5. Add server-side discovery, mutual-like matching, Secret Crush reveal, unmatch, block and report workflows.
-6. Add message read receipts, realtime subscriptions and push notifications.
+6. Add realtime messaging only after match and block authorization tests pass.
 7. Add moderator workflows, audit trail, account deletion/export and retention controls.
-8. Test RLS allow/deny cases and physical-device builds before any real-user launch.
-
-## Linter note
-
-Supabase's security advisor currently reports that `private.verification_records` has RLS disabled. The schema revokes access to the private schema and table from `anon` and `authenticated`, so the table is not intended for client access; however, the advisor still flags it as critical. Do not expose this schema. Decide and test the server-only access model before enabling RLS with policies.
+8. Complete penetration-style RLS/API tests, backups, alerts and the production launch review.
