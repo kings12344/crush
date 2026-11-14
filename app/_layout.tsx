@@ -10,15 +10,13 @@ function RootNavigator() {
   useEffect(() => {
     if (loading) return;
     const root = segments[0];
-    const second = segments[1];
-
-    if (!session && root === '(tabs)') {
+        if (!session && root === '(tabs)') {
       router.replace('/(auth)/welcome');
       return;
     }
 
-    if (session && root === '(auth)' && second !== 'pending') {
-      router.replace('/(auth)/pending');
+    if (session && root === '(auth)') {
+      router.replace('/pending');
     }
   }, [loading, session?.user.id, segments]);
 
