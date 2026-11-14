@@ -4,7 +4,7 @@
 
 begin;
 
-select plan(15);
+select plan(18);
 
 select has_table('private', 'verification_records',
   'verification records are stored outside the exposed public schema');
@@ -64,6 +64,16 @@ select ok(not exists (
   where schemaname = 'private'
     and tablename = 'action_rate_limits'
 ), 'rate-limit table has no client policies (intentional default deny)');
+
+select ok(not has_table_privilege('authenticated',
+  'public.reports', 'INSERT'),
+  'signed-in users cannot insert reports directly or forge moderation status');
+select ok(not has_function_privilege('anon',
+  'public.submit_report(uuid,text,text)', 'EXECUTE'),
+  'anonymous users cannot submit reports');
+select ok(has_function_privilege('authenticated',
+  'public.submit_report(uuid,text,text)', 'EXECUTE'),
+  'signed-in users can submit reports through the validated RPC');
 
 select * from finish();
 rollback;
