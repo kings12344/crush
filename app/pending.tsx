@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { Heading } from '../../components/Heading';
-import { Panel } from '../../components/Panel';
-import { Screen } from '../../components/Screen';
-import { colors } from '../../constants/theme';
-import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
+import { Heading } from '../components/Heading';
+import { Panel } from '../components/Panel';
+import { Screen } from '../components/Screen';
+import { colors } from '../constants/theme';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 
 export default function PendingAccess() {
   const { user } = useAuth();
