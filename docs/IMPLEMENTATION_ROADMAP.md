@@ -18,13 +18,14 @@ Implemented and deployed:
 - Authenticated, rate-limited discovery, like and Secret Crush RPCs with mutual-match and conversation creation. Both caller and candidates must have verified age and student status, visible profiles, relevant preference enabled and no block in either direction. A follow-up migration now enforces the caller's own visibility and selected mode inside the discovery RPC, not just in client navigation.
 - SecureStore session manifests validate generated IDs and bound chunk counts to 100 on read, write and cleanup, preventing malformed metadata from triggering unbounded cleanup work.
 - User report submission now goes through an authenticated, rate-limited `submit_report` RPC. Direct client INSERT on `public.reports` is revoked; the RPC derives the reporter from `auth.uid()`, validates category/target/details, and always creates a `pending` report. Live catalog checks confirm authenticated direct INSERT is denied, authenticated RPC execution is allowed, and anon RPC execution is denied.
+- Discovery profile cards now include an Android/iOS-friendly report modal with reason selection and optional details, connected to `submit_report`; success and failure states are surfaced without exposing report contents. Added three pgTAP catalog assertions for report grants; suite plan is now 18 checks but remains unexecuted because pgTAP is not installed in the hosted project.
 - Unauthenticated RPC smoke tests fail closed. Direct Supabase catalog checks currently pass 15/15 against the deployed project; the project has no Auth users yet, so authenticated two-account behavior cannot be exercised without test accounts.
 - Added `supabase/tests/verification_and_discovery.test.sql` with pgTAP catalog checks for RLS, private-schema boundaries, trigger installation and RPC execute grants. This test file is committed but has not yet been run in CI or a local Supabase test stack.
 
 Still required:
 - Complete Auth redirect allowlist and email delivery configuration.
 - Physical-device signup, email confirmation, session persistence, password recovery and logout tests.
-- Discovery UI is connected to live discovery, like and Secret Crush RPCs; Friends mode is browse-only until friend requests are implemented.
+- Discovery UI is connected to live discovery, like and Secret Crush RPCs; profile reporting now calls the secure report RPC. Friends mode is browse-only until friend requests are implemented.
 - Select and implement a trusted 18+ age-assurance provider.
 - Establish a University-approved UNESWA student verification process.
 - Add moderator review, unmatch, account deletion/export and retention controls.
