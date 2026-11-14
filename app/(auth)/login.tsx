@@ -32,7 +32,7 @@ export default function Login() {
         return;
       }
       await ensureProfile(data.user);
-      router.replace('/(auth)/pending');
+      router.replace('/pending');
     } catch {
       setNotice('CRUSH could not complete sign-in. Check your connection and try again.');
     } finally {
