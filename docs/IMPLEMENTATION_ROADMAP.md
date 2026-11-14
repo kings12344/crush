@@ -1,12 +1,27 @@
 # CRUSH implementation roadmap
 
-This roadmap turns the gaps documented in `BUILD_STATUS.md`, `SECURITY.md`, `API_PLAN.md`, and `INTEGRATIONS.md` into a staged implementation. The current repository is a frontend prototype; none of the stages below should be described as complete until code, configuration, and relevant tests demonstrate the outcome.
+This roadmap tracks the transition from a frontend prototype to a secure campus social-discovery app. No stage is complete until code, configuration, and relevant tests demonstrate the outcome.
 
 ## Stage 1 — Trusted core
 
-Implement the API and PostgreSQL persistence for account identity, profile editing, preferences, discoverability, dating/friend modes, profile discovery, likes, mutual matches, private conversations, messaging, unmatch, block, and report. Every operation must use verified server identity, validate eligibility and active account status, and enforce both directions of a block. Secret-crush sender identity must remain hidden unless an eligible mutual reveal is authorized. Add integration tests for authorization boundaries, block bypass, match revocation, and secret-crush disclosure.
+Selected backend: Supabase Auth, PostgreSQL, private Storage, Realtime and Edge Functions. The Expo/React Native client uses Supabase JS.
 
-Implement server-side age and student-verification states as separate workflows. Until a vendor or approved University of Eswatini review process is configured, account eligibility must remain pending; never turn a client DOB field, email domain, or demo flag into verified status. Store outcome/reference and minimal audit data, not identity-document images in the application database.
+The first schema and authentication foundation are now deployed/integrated:
+- Auth email/password signup, sign-in, email confirmation and password recovery/reset are implemented on the feature branch.
+- PKCE is enabled; native session persistence uses an OS-backed SecureStore adapter.
+- Authenticated users receive an owner-only hidden profile.
+- University of Eswatini and Kwaluseni campus seed data exists.
+- RLS is enabled across public tables and private verification records.
+- Client inserts to likes and Secret Crush are disabled pending trusted server workflows.
+
+Still required in Stage 1:
+- Complete Auth redirect allowlist and email delivery configuration.
+- Physical-device signup, email confirmation, session persistence, password recovery and logout tests.
+- Server-side eligibility checks, profile discovery, mutual likes, match creation, conversations, messaging, unmatch, block and report.
+- Strict enforcement of age 18+ and verified UNESWA student status.
+- Integration tests for authorization boundaries, block bypass, match revocation and Secret Crush disclosure.
+
+Until an age provider or University-approved process is selected and connected, accounts must remain pending and profiles hidden. Never turn a client DOB field, email domain or demo flag into verified status.
 
 ## Stage 2 — Media and moderation
 
@@ -14,22 +29,22 @@ Add private image/video upload sessions, ownership-bound media metadata, playbac
 
 ## Stage 3 — Notifications, calls, and events
 
-Add device-token registration and revocation, generic privacy-safe push payloads, in-app notifications, delivery retries/receipts, campus events, registrations, and cancellation rules. Add one-to-one call invitations and call state with short-lived provider tokens issued only after rechecking eligibility, active match, and both block directions. Calls are not recorded by default.
+Add device-token registration and revocation, generic privacy-safe push payloads, in-app notifications, delivery retries/receipts, campus events, registrations and cancellation rules. Add one-to-one call invitations and call state with short-lived provider tokens issued only after rechecking eligibility, active match and both block directions. Calls are not recorded by default.
 
 ## Stage 4 — Admin, account rights, and payments
 
-Add a separate staff/admin surface with strict role separation, least-privilege scopes and audit logs. Implement account deletion, data export, retention/deletion jobs, consent records, and privacy-safe operational monitoring. Add premium entitlements and payment lifecycle only after a payment provider confirms Eswatini merchant onboarding and settlement, and after app-store billing requirements for digital benefits have been resolved. Never activate charges in a prototype.
+Add a separate staff/admin surface with strict role separation, least-privilege scopes and audit logs. Implement account deletion, data export, retention/deletion jobs, consent records and privacy-safe operational monitoring. Add premium entitlements and payment lifecycle only after a payment provider confirms Eswatini merchant onboarding and settlement, and after app-store billing requirements for digital benefits have been resolved. Never activate charges in a prototype.
 
 ## Stage 5 — Release readiness
 
-Upgrade the Expo SDK and resolve the known dependency audit findings through a planned SDK migration rather than `npm audit fix --force`. Validate iOS/Android builds and device-only paths, backend security controls, database migrations/backups, secrets handling, operational alerts, abuse response, accessibility, privacy review, and the full launch gate in `SECURITY.md`. Deployment and production credentials remain operator-owned and must not be committed to Git.
+Resolve the known dependency audit findings through a planned SDK-compatible update rather than npm audit fix --force. Validate iOS/Android builds and device-only paths, backend security controls, database migrations/backups, secrets handling, operational alerts, abuse response, accessibility, privacy review and the full launch gate in SECURITY.md. Deployment and production credentials remain operator-owned and must not be committed to Git.
 
-Progress as of 2026-11-14: the project has moved sequentially from SDK 56 through SDK 57 to SDK 58. TypeScript passes, `npx expo install --check` passes, Expo Doctor reports 20/20 checks, and Expo Web export succeeds. Sign-in and verification journeys are now represented by fail-closed client screens that collect no personal data; they do not authenticate users or submit verification requests. `npm audit` still reports 3 moderate findings. No iOS/Android release build, physical-device verification, backend, provider account, or live credential was available; Stage 5 and production readiness remain incomplete.
+Progress as of 2026-11-14: Supabase project and initial schema are deployed in EU West. Supabase Security Advisor currently reports no findings. Supabase JS, React Native URL polyfill and Expo SecureStore are pinned; the dependency lockfile has been regenerated. Registration, login, email-confirmation and password-recovery code is integrated in the feature branch. An Android pull-request workflow is running TypeScript checks and building a debug APK. Physical-device auth testing, age/student verification, server-side discovery/matching/chat and production release gates remain incomplete. The dependency audit still reports 3 moderate findings.
 
 ## Provider direction and gates
 
-The existing target stack is Expo/React Native, NestJS, PostgreSQL, WebSockets, private object/media storage, APNs/FCM push, a WebRTC provider, and a separate admin portal. Current provider notes and official references are in `PROVIDER_DECISIONS.md`.
+Supabase is the selected backend and authentication platform. The prior NestJS + Clerk direction is superseded. Provider choices for age assurance, UNESWA student verification, email SMTP, media, calls and moderation remain conditional and are documented in PROVIDER_DECISIONS.md.
 
-Current conditional technical shortlist: Clerk for Expo identity (after confirming Eswatini contracting eligibility); Expo Push Service for initial notifications; Cloudinary for media if authenticated delivery and Expo native-build compatibility are validated; Daily for calls after a device/network pilot; Hive for moderation after account and Dashboard access are confirmed. Didit is only an age/document-verification candidate, not student-status verification. SheerID's UNESWA coverage is unconfirmed; until confirmed, student review needs a University-approved manual process. Payment provider availability is unresolved: DPO is a candidate to ask, not a verified Eswatini merchant solution. Do not implement vendor assumptions as verified facts.
+Didit is only an age/document-verification candidate, not student verification. SheerID's UNESWA coverage is unconfirmed; until confirmed, student review needs a University-approved manual process. Expo Push Service is the initial notification candidate. Cloudinary is a media candidate if authenticated delivery and Expo native-build compatibility are validated. Daily is a call candidate after a device/network pilot. Hive is a moderation candidate after account and Dashboard access are confirmed. Payment provider availability is unresolved.
 
-Code can be scaffolded against interfaces before accounts are provisioned. Live integrations require vendor confirmation, user-owned accounts, credentials stored only in server-side secret management, written terms/retention review, and end-to-end device tests. This roadmap is not a claim of production readiness, legal compliance, or provider eligibility.
+Vendor selection does not establish Eswatini onboarding, legal compliance or production readiness. Live integrations require vendor confirmation, user-owned accounts, credentials stored only in server-side secret management, written terms/retention review and end-to-end device tests.
