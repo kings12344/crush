@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "CRUSH",
+    "slug": "crush-mobile",
+    "scheme": "crush",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#FFF5FA"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.crush.social"
+    },
+    "android": {
+      "package": "com.crush.social",
+      "adaptiveIcon": {
+        "backgroundColor": "#FFF5FA"
+      }
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}
