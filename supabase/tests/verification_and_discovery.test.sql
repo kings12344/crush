@@ -4,7 +4,7 @@
 
 begin;
 
-select plan(28);
+select plan(29);
 
 select has_table('private', 'verification_records',
   'verification records are stored outside the exposed public schema');
@@ -54,6 +54,22 @@ select ok(not has_function_privilege('authenticated',
 select ok(not has_function_privilege('authenticated',
   'private.initialize_verification_record()', 'EXECUTE'),
   'clients cannot invoke the Auth verification trigger function');
+
+select ok((
+  select count(*) = 2
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'private'
+    and p.proname = any (array[
+      'consume_action_rate_limit', 'initialize_verification_record'
+    ])
+    and p.prosecdef
+    and coalesce(p.proconfig, array[]::text[]) @> array['search_path=""']
+) and not has_function_privilege('anon',
+  'private.consume_action_rate_limit(text,integer,interval)', 'EXECUTE')
+  and not has_function_privilege('anon',
+  'private.initialize_verification_record()', 'EXECUTE'),
+  'private SECURITY DEFINER helpers pin an empty search_path and deny anon execution');
 
 select has_trigger('auth', 'users',
   'on_auth_user_created_verification_record',
