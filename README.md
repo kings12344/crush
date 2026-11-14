@@ -20,6 +20,8 @@ CRUSH is a student social discovery app for users aged 18+, initially planned fo
 
 This is a **frontend prototype, not a production app**. No real authentication, server, persistence, matching, chat delivery, verification upload, moderation, payments, or calls exist. Do not enter real credentials or personal documents. All sample profiles and preview interactions are fictitious/local-only. Client-side validation is not security enforcement. Dependency audit is also unresolved: 17 advisories (including 5 high) remain in the current SDK dependency tree; see [`docs/SECURITY.md`](docs/SECURITY.md). Production release is blocked pending a tested SDK migration and clean audit.
 
+Implementation gaps and stages are tracked in [`docs/IMPLEMENTATION_ROADMAP.md`](docs/IMPLEMENTATION_ROADMAP.md). Provider options and unresolved Eswatini availability checks are in [`docs/PROVIDER_DECISIONS.md`](docs/PROVIDER_DECISIONS.md). The additive SQL in `database/migrations/` is a **draft data model only**; it has not been applied or connected to an API.
+
 Before inviting real users, implement and independently test the backend authorization, provider-backed login and session security, age/student verification, privacy controls, blocking/report moderation, secure media handling, deletion/export, and operational response requirements in [`docs/SECURITY.md`](docs/SECURITY.md). The SQL file is a design reference and should not be run against production without a reviewed migration plan.
 
 ## Product and privacy rules
