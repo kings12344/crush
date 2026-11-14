@@ -34,9 +34,9 @@ Email/password sign-up must keep email confirmation enabled. The default Supabas
 
 **CRUSH is still a development build, not a production dating app.** The Supabase project and database schema are live, and the mobile authentication integration is implemented on the feature branch. The Android pull-request workflow runs TypeScript checks and builds a sideloadable debug APK. Physical-device authentication and session persistence still need testing.
 
-The app deliberately does not unlock discovery, matching or messaging after sign-in. Age assurance and UNESWA student verification are not connected. Until trusted services verify both requirements, profiles remain hidden. Direct client inserts into likes and Secret Crush are disabled; trusted matching and reveal workflows are not implemented.
+The app keeps signed-in users on a pending-access screen until trusted services verify both 18+ age eligibility and UNESWA student status. Those verification workflows are not connected, so discovery remains locked. The database includes authenticated, rate-limited discovery, like and Secret Crush RPCs that check both users' verification state, profile visibility, dating preferences and both directions of blocks before returning profiles or creating a mutual match/conversation. Direct client table inserts for likes and Secret Crush remain revoked. These RPCs still need two-account adversarial behavior tests before production use.
 
-The discovery, reels, matches and inbox areas still contain prototype/local preview behavior. Do not present sample profiles or interactions as real users or real activity. Do not invite public users or collect real identity documents. Use controlled test accounts only until device, privacy and security tests pass.
+Reporting and blocking have authenticated RPCs with server-derived actor identity and rate limits. The report review queue, moderation operations, account deletion/export and full messaging experience are not complete. The discovery, reels, matches and inbox areas still include prototype/local preview behavior. Do not present sample profiles or interactions as real users or real activity. Do not invite public users or collect real identity documents. Use controlled test accounts only until device, privacy and security tests pass.
 
 The Expo SDK 58 dependency audit still reports 3 moderate advisories and no high or critical findings. See docs/SECURITY.md, docs/SUPABASE_BACKEND.md, and docs/IMPLEMENTATION_ROADMAP.md.
 
@@ -54,4 +54,4 @@ This is a **debug build for testing**, signed with a temporary runner-generated 
 - Unmatched Secret Crush senders must never be revealed.
 - Only eligible, mutually matched users can use dating chat and calls; block state overrides matching.
 - No precise live location.
-- Never present mock data as real users, moderation, or transactions.
+- Never present mock data as real users/actions or transactions.
