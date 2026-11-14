@@ -31,8 +31,9 @@ Migration files:
 - `supabase/migrations/20261114180508_deny_client_verification_access.sql`
 - `supabase/migrations/20261114182000_hide_block_relationships.sql`
 - `supabase/migrations/20261114190000_verified_discovery_and_matching.sql`
+- `supabase/migrations/20261114191000_initialize_verification_status.sql`
 
-The hosted migration is applied. The live audit confirms RLS on all 10 public application tables and on private verification/rate-limit tables; the profile-photo bucket is private; direct client INSERT privileges on likes and Secret Crush are absent; and messages are in the Realtime publication.
+An Auth trigger now creates a private `pending/pending` verification record automatically for every new account and backfills any existing Auth users. Clients cannot write or promote these statuses. The hosted migrations are applied. The live audit confirms RLS on all 10 public application tables and on private verification/rate-limit tables; the profile-photo bucket is private; direct client INSERT privileges on likes and Secret Crush are absent; and messages are in the Realtime publication.
 
 The latest Supabase Security Advisor run reports:
 - One INFO finding: `private.action_rate_limits` has RLS enabled and no policies. This is intentional default-deny protection; only the narrowly scoped SECURITY DEFINER rate-limit helper accesses it.
@@ -64,7 +65,7 @@ The hosted database now contains these authenticated RPCs:
 
 Clients cannot read Secret Crush rows or create matches/conversations directly. RPC responses disclose only whether a mutual match occurred and its match ID. The app currently has no age/student verification process that can legitimately mark a user verified, so these functions are intentionally fail-closed and discovery remains empty until an approved trusted verification workflow exists.
 
-The RPCs have been added to the feature branch and deployed to the hosted Supabase database. The mobile screens have not yet been wired to call them.
+The RPCs have been added to the feature branch and deployed to the hosted Supabase database. The Discovery screen now calls the real discovery, like and Secret Crush RPCs. Friends mode is browse-only until a separate friend-request workflow is implemented. Pass remains session-only; permanent pass history and reporting are not yet wired into this screen.
 
 ## Required Supabase Dashboard configuration
 
@@ -111,7 +112,7 @@ The Android GitHub Actions workflow also injects those same public client values
 1. Verify public Data API exposure without exposing the private schema.
 2. Complete Supabase Auth redirect and email provider configuration in the dashboard.
 3. Finish the Android PR build and TypeScript checks; resolve any failures.
-4. Wire the mobile discovery, like and Secret Crush screens to the deployed RPCs, with graceful handling for no eligible profiles and rate-limit errors.
+4. Finish mobile UI testing for discovery, likes and Secret Crush; add permanent pass history and the separate friend-request workflow.
 5. Select and integrate trusted age assurance and a University-approved UNESWA student verification workflow. Accounts must remain hidden and ineligible until both checks are verified.
 6. Add moderator workflows, audit trail, account deletion/export and retention controls.
 7. Run authenticated two-account tests for reciprocal/non-reciprocal likes, Secret Crush privacy, block in both directions, unmatch, session revocation and rate limits.
