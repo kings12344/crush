@@ -56,7 +56,7 @@ export default function ResetPassword() {
       Alert.alert('Could not update password', 'The reset link may have expired. Request a new one and try again.');
       return;
     }
-    router.replace('/(auth)/pending');
+    router.replace('/pending');
   };
 
   return (
