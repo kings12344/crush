@@ -13,13 +13,14 @@ Implemented and deployed:
 - University of Eswatini and Kwaluseni campus seed data.
 - RLS on public application tables and private verification records.
 - Client direct inserts to likes and Secret Crush revoked.
+- An Auth trigger automatically creates private pending verification records for new users and backfills existing accounts.
 - Authenticated, rate-limited discovery, like and Secret Crush RPCs with mutual-match and conversation creation. All require both age and student verification, visible profiles, relevant preference enabled and no block in either direction.
 - Unauthenticated RPC smoke tests fail closed.
 
 Still required:
 - Complete Auth redirect allowlist and email delivery configuration.
 - Physical-device signup, email confirmation, session persistence, password recovery and logout tests.
-- Connect mobile discovery and action screens to the new RPCs.
+- Discovery UI is connected to live discovery, like and Secret Crush RPCs; Friends mode is browse-only until friend requests are implemented.
 - Select and implement a trusted 18+ age-assurance provider.
 - Establish a University-approved UNESWA student verification process.
 - Add moderator review, unmatch, account deletion/export and retention controls.
@@ -44,7 +45,7 @@ Add a separate staff/admin surface with strict role separation, least-privilege 
 
 Resolve the known dependency audit findings through a planned SDK-compatible update rather than npm audit fix --force. Validate iOS/Android builds and device-only paths, backend security controls, database migrations/backups, secrets handling, operational alerts, abuse response, accessibility, privacy review and the full launch gate in SECURITY.md. Deployment and production credentials remain operator-owned and must not be committed to Git.
 
-Progress as of 2026-11-14: Supabase project and schema are deployed in EU West. Supabase JS, React Native URL polyfill and Expo SecureStore are pinned; the dependency lockfile has been regenerated. Registration, login, email-confirmation and password-recovery code is integrated in the feature branch. Discovery, like and Secret Crush RPCs have been deployed and committed as a migration. Unauthenticated smoke tests passed. Supabase Advisor flags the three intentionally exposed SECURITY DEFINER RPCs for review and the private rate-limit table as default-deny; see SUPABASE_BACKEND.md. The Android pull-request workflow is running TypeScript checks and a debug APK build. Physical-device auth testing, trusted age/student verification, mobile RPC wiring and authenticated security tests remain incomplete. The dependency audit still reports 3 moderate findings.
+Progress as of 2026-11-14: Supabase project and schema are deployed in EU West. Supabase JS, React Native URL polyfill and Expo SecureStore are pinned; the dependency lockfile has been regenerated. Registration, login, email-confirmation and password-recovery code is integrated in the feature branch. Discovery, like and Secret Crush RPCs have been deployed and committed as a migration; the Discovery UI calls them. A new-user trigger creates private pending verification status. Unauthenticated smoke tests passed. Supabase Advisor flags the three intentionally exposed SECURITY DEFINER RPCs for review and the private rate-limit table as default-deny; see SUPABASE_BACKEND.md. The Android pull-request workflow is running TypeScript checks and a debug APK build. Physical-device auth testing, trusted age/student verification, physical-device UI tests and authenticated two-account security tests remain incomplete. The dependency audit still reports 3 moderate findings.
 
 ## Provider direction and gates
 
