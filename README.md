@@ -16,6 +16,14 @@ CRUSH is a student social discovery app for users aged 18+, initially planned fo
 3. Run `npm run typecheck`.
 4. Run `npx expo start` and launch on a simulator/device.
 
+## Build a sideloadable Android test APK
+
+The `Android debug APK` GitHub Actions workflow runs on pushes to `main` and can also be started manually from the repository's **Actions** tab. When a run succeeds, download the `crush-android-debug-apk` artifact, unzip it, and install `app-debug.apk` on an Android phone. Android may ask you to allow installation from the browser or file manager you use to open the APK.
+
+This is a **debug build for testing**, signed with a temporary runner-generated debug key. It is not release-signed, is not published to Google Play or another store, and does not require Expo/EAS credentials. A later build may not update over an APK signed by a different temporary key; uninstall the older test build first if Android refuses the update. The artifact is retained for 30 days.
+
+Installing the APK does not make the prototype's sign-in or verification flows live. See the security warning below and do not enter real credentials or personal documents.
+
 ## Current status and security warning
 
 This is a **frontend prototype, not a production app**. No real authentication, server/API, account persistence, matching, chat delivery, verification upload, moderation, payments, or calls exist. Sign-in and verification screens are fail-closed previews only; they do not create accounts or submit requests. Do not enter real credentials or personal documents. All sample profiles and preview interactions are fictitious/local-only. Four non-sensitive privacy-preview values can be saved on this device, but they do not affect a CRUSH account or server. Client-side validation is not security enforcement. The Expo SDK 58 dependency audit still reports 3 moderate advisories (no high or critical findings); see [`docs/SECURITY.md`](docs/SECURITY.md). TypeScript, Expo Doctor (20/20), dependency alignment, Expo config generation, and web export pass, but iOS/Android builds and device-only flows have not been validated. Production release remains blocked.

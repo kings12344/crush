@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — GitHub Android debug build
+- Added a GitHub Actions workflow to prebuild Android and generate a sideloadable debug APK artifact on pushes to `main` or manual workflow dispatch; it does not publish to a store or use release-signing secrets.
+- Documented how to download and install the 30-day APK artifact and clarified that authentication and verification remain prototype-only.
+
 ## V3.3 — Fail-closed sign-in and verification journeys
 - Replaced the demo credential and date-of-birth forms with an account-setup journey that requests no email, password, or verification evidence until trusted services are configured.
 - Added sign-in, age-assurance, and student-status screens that clearly show service availability and keep verification unverified.
