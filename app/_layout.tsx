@@ -10,7 +10,7 @@ function RootNavigator() {
   useEffect(() => {
     if (loading) return;
     const root = segments[0];
-        if (!session && root === '(tabs)') {
+        if (!session && (root === '(tabs)' || root === 'pending')) {
       router.replace('/(auth)/welcome');
       return;
     }
