@@ -1,16 +1,65 @@
-import { useState } from 'react';
-import { Alert, Pressable, Text, StyleSheet } from 'react-native';
-import { Screen } from '../../components/Screen';
+import { router } from 'expo-router';
+import { Pressable, StyleSheet, Text } from 'react-native';
 import { Heading } from '../../components/Heading';
 import { Panel } from '../../components/Panel';
+import { Screen } from '../../components/Screen';
 import { colors } from '../../constants/theme';
+
 export default function Verification() {
- const [method,setMethod]=useState('University email');
- return <Screen>
-  <Heading eyebrow="STUDENT COMMUNITY" title="Verify your student status" subtitle="Verification helps keep CRUSH focused on genuine students. Your documents are never public."/>
-  {['University email','Student card review','Manual verification'].map(m=><Pressable key={m} onPress={()=>setMethod(m)}><Panel style={method===m?{borderColor:colors.pink,borderWidth:2}:undefined}><Text style={{fontWeight:'900',color:colors.black}}>{method===m?'◉':'○'}  {m}</Text><Text style={{color:colors.muted,fontSize:12}}>{m==='University email'?'Use an eligible institution email address.':m==='Student card review'?'Submit a secure document for authorized review.':'Request help if other methods are unavailable.'}</Text></Panel></Pressable>)}
-  <Panel><Text style={{fontWeight:'900'}}>Privacy promise</Text><Text style={{color:colors.muted,lineHeight:20}}>Verification files are private and must only be accessible to authorized verification staff. This demo does not upload or store documents.</Text></Panel>
-  <Pressable style={s.button} onPress={()=>Alert.alert('Verification not connected','This is a design preview. Secure upload, review and university email verification will be implemented with the backend.')}><Text style={s.buttonText}>Continue with {method}</Text></Pressable>
- </Screen>;
+  return (
+    <Screen>
+      <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()}>
+        <Text style={styles.back}>‹ Back</Text>
+      </Pressable>
+      <Heading eyebrow="ELIGIBILITY CHECKS" title="Verification status" subtitle="No verification requests have been submitted from this build." />
+
+      <Panel>
+        <Text style={styles.status}>Age assurance · Not verified</Text>
+        <Text style={styles.body}>
+          CRUSH must confirm that an account holder is at least 18 through a trusted provider or approved process. Client-entered dates and checkboxes cannot grant eligibility.
+        </Text>
+        <Text style={styles.pending}>Eligibility stays pending until the server validates an authorized result.</Text>
+      </Panel>
+
+      <Panel>
+        <Text style={styles.status}>UNESWA student status · Not verified</Text>
+        <Text style={styles.body}>
+          A University-approved verification process has not been selected or connected. A university email address alone will not mark an account as a verified student.
+        </Text>
+        <Text style={styles.pending}>No review request is open. No document or email was uploaded or sent.</Text>
+      </Panel>
+
+      <Panel>
+        <Text style={styles.title}>Privacy and access</Text>
+        <Text style={styles.body}>
+          This screen does not collect a date of birth, student email, identity document, or other evidence. When verification is configured, CRUSH should keep only the minimum outcome and reference data, restrict evidence access, and apply an approved retention and deletion policy.
+        </Text>
+      </Panel>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: true }}
+        disabled
+        style={[styles.disabledButton, styles.button]}
+      >
+        <Text style={styles.disabledText}>Verification unavailable — not submitted</Text>
+      </Pressable>
+      <Pressable accessibilityRole="button" style={styles.secondary} onPress={() => router.replace('/(auth)/welcome')}>
+        <Text style={styles.secondaryText}>Return to welcome</Text>
+      </Pressable>
+    </Screen>
+  );
 }
-const s=StyleSheet.create({button:{backgroundColor:colors.pink,padding:16,borderRadius:14,alignItems:'center'},buttonText:{color:'white',fontWeight:'900'}});
+
+const styles = StyleSheet.create({
+  back: { fontSize: 17, color: colors.pink, fontWeight: '800', marginBottom: 8 },
+  status: { color: colors.pink, fontSize: 16, fontWeight: '900' },
+  title: { color: colors.black, fontWeight: '900' },
+  body: { color: colors.muted, fontSize: 13, lineHeight: 20 },
+  pending: { color: colors.black, fontSize: 12, lineHeight: 18, fontWeight: '700' },
+  button: { padding: 16, borderRadius: 14, alignItems: 'center' },
+  disabledButton: { backgroundColor: '#E7DCE2' },
+  disabledText: { color: '#756A71', fontWeight: '800', textAlign: 'center' },
+  secondary: { borderWidth: 1, borderColor: colors.border, padding: 15, borderRadius: 14, alignItems: 'center' },
+  secondaryText: { color: colors.black, fontWeight: '800' },
+});

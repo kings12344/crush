@@ -24,7 +24,7 @@ Add a separate staff/admin surface with strict role separation, least-privilege 
 
 Upgrade the Expo SDK and resolve the known dependency audit findings through a planned SDK migration rather than `npm audit fix --force`. Validate iOS/Android builds and device-only paths, backend security controls, database migrations/backups, secrets handling, operational alerts, abuse response, accessibility, privacy review, and the full launch gate in `SECURITY.md`. Deployment and production credentials remain operator-owned and must not be committed to Git.
 
-Progress as of 2026-11-14: the project has moved sequentially from SDK 56 through SDK 57 to SDK 58. TypeScript passes, `npx expo install --check` passes, Expo Doctor reports 20/20 checks, and Expo Web export succeeds. `npm audit` still reports 3 moderate findings. No iOS/Android release build, physical-device verification, backend, provider account, or live credential was available; Stage 5 and production readiness remain incomplete.
+Progress as of 2026-11-14: the project has moved sequentially from SDK 56 through SDK 57 to SDK 58. TypeScript passes, `npx expo install --check` passes, Expo Doctor reports 20/20 checks, and Expo Web export succeeds. Sign-in and verification journeys are now represented by fail-closed client screens that collect no personal data; they do not authenticate users or submit verification requests. `npm audit` still reports 3 moderate findings. No iOS/Android release build, physical-device verification, backend, provider account, or live credential was available; Stage 5 and production readiness remain incomplete.
 
 ## Provider direction and gates
 

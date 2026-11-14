@@ -1,5 +1,11 @@
 # Changelog
 
+## V3.3 — Fail-closed sign-in and verification journeys
+- Replaced the demo credential and date-of-birth forms with an account-setup journey that requests no email, password, or verification evidence until trusted services are configured.
+- Added sign-in, age-assurance, and student-status screens that clearly show service availability and keep verification unverified.
+- Disabled verification submission and made the welcome screen disclose that no account or review request is created.
+- No identity provider, backend, age-verification vendor, or University-approved student process is connected. These screens are UI flow work only, not live authentication or verification.
+
 ## V3.2 — SDK 58 maintenance and local preview preferences
 - Migrated the Expo project sequentially through SDK 56 and SDK 57 to SDK 58; replaced legacy splash configuration with the supported splash-screen plugin and kept the existing background color.
 - Repaired the lockfile from a clean SDK 58 dependency tree without `--force` or `--legacy-peer-deps`, added the direct Worklets peer, and removed the deprecated TypeScript `baseUrl` option.

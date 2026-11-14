@@ -18,7 +18,7 @@ CRUSH is a student social discovery app for users aged 18+, initially planned fo
 
 ## Current status and security warning
 
-This is a **frontend prototype, not a production app**. No real authentication, server/API, account persistence, matching, chat delivery, verification upload, moderation, payments, or calls exist. Do not enter real credentials or personal documents. All sample profiles and preview interactions are fictitious/local-only. Four non-sensitive privacy-preview values can be saved on this device, but they do not affect a CRUSH account or server. Client-side validation is not security enforcement. The Expo SDK 58 dependency audit still reports 3 moderate advisories (no high or critical findings); see [`docs/SECURITY.md`](docs/SECURITY.md). TypeScript, Expo Doctor (20/20), dependency alignment, Expo config generation, and web export pass, but iOS/Android builds and device-only flows have not been validated. Production release remains blocked.
+This is a **frontend prototype, not a production app**. No real authentication, server/API, account persistence, matching, chat delivery, verification upload, moderation, payments, or calls exist. Sign-in and verification screens are fail-closed previews only; they do not create accounts or submit requests. Do not enter real credentials or personal documents. All sample profiles and preview interactions are fictitious/local-only. Four non-sensitive privacy-preview values can be saved on this device, but they do not affect a CRUSH account or server. Client-side validation is not security enforcement. The Expo SDK 58 dependency audit still reports 3 moderate advisories (no high or critical findings); see [`docs/SECURITY.md`](docs/SECURITY.md). TypeScript, Expo Doctor (20/20), dependency alignment, Expo config generation, and web export pass, but iOS/Android builds and device-only flows have not been validated. Production release remains blocked.
 
 Implementation gaps and stages are tracked in [`docs/IMPLEMENTATION_ROADMAP.md`](docs/IMPLEMENTATION_ROADMAP.md). Provider options and unresolved Eswatini availability checks are in [`docs/PROVIDER_DECISIONS.md`](docs/PROVIDER_DECISIONS.md). The additive SQL in `database/migrations/` is a **draft data model only**; it has not been applied or connected to an API.
 
@@ -35,7 +35,7 @@ Before inviting real users, implement and independently test the backend authori
 
 ## V3 prototype upgrades
 
-- Stronger registration UX (email normalization/format, real-date and age checks, password confirmation and policy); login warnings against real credentials.
+- Fail-closed sign-in, account-setup, age-assurance and student-verification journey screens; they collect no account credentials or verification evidence while providers and backend are unavailable.
 - Interactive discovery modes, local-only pass/like preview, and report/hide preview actions.
 - Added device-only persistence for non-sensitive privacy-preview switches and a dedicated Safety Center; the switches do not update any account or enforce privacy.
 - Hardened database reference schema with external identity-provider subject IDs, input constraints, indexes, and explicit privacy/authorization notes.

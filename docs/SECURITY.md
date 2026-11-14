@@ -1,6 +1,6 @@
 # CRUSH Security Baseline and Launch Gate
 
-**Current security status: prototype only — not safe for real accounts or personal data.** The app has no backend, auth provider, network API, persistence, moderation team, or secure upload. Local checks in React Native are UX validation only and can be bypassed. The changes in this branch improve the prototype and database design; they do not make a deployed service secure by themselves.
+**Current security status: prototype only — not safe for real accounts or personal data.** The app has no backend, auth provider, account persistence, network API, moderation team, or secure upload. A small set of non-sensitive preview preferences is stored locally; it is not account data. Local checks in React Native are UX validation only and can be bypassed. The changes in this branch improve the prototype and database design; they do not make a deployed service secure by themselves.
 
 ## Protect these assets
 
@@ -30,8 +30,8 @@ Account identity and email; date of birth and age evidence; student verification
 ## Current implementation in this project
 
 - **Dependency audit remains open (2026-11-14):** After moving to Expo SDK 58.0.25 and regenerating the lockfile, `npm audit` reports 3 moderate advisories and no high or critical findings. The affected packages include Expo, Expo fingerprinting, and minimatch. The audit's automatic remediation requires a major version change; it was not forced. Re-run the audit after a compatible upstream fix. Do not ship until remaining findings are resolved or explicitly risk-accepted, and native builds/device paths are tested.
-- Registration now normalizes/checks email syntax, validates real calendar dates and 18+ locally, adds a password confirmation, sets native text-content hints, and uses a stronger minimum password policy for demo UX. It still creates no account and must not be treated as server-side security.
-- Login explicitly warns against entering real credentials.
+- Welcome, sign-in, account-setup, age-assurance and student-verification screens show the intended journey but fail closed. They collect no email, password, date of birth, or verification document and submit no request while services are unconfigured.
+- No session can be established, and verification remains unverified. A future provider/backend integration must return the trusted state; no client-side value may grant access.
 - Discovery actions are local-only, labeled as a preview, and include a report/hide preview action.
 - Profile privacy-preview switches save four non-sensitive boolean values on the current device only. They do not change a real profile or account, sync to a server, or enforce visibility. This AsyncStorage value is not for credentials, identity evidence, or other secrets. A safety center explains non-connected controls and practical boundaries.
 - The SQL schema uses an external auth subject instead of a local password hash, adds constraints and indexes, and lists authorization requirements. It is a reference schema, not a migration ready to apply to an existing live database.

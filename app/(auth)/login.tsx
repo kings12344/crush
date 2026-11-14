@@ -1,21 +1,51 @@
-import { useState } from 'react';
 import { router } from 'expo-router';
-import { Alert, Pressable, Text, TextInput, StyleSheet, View } from 'react-native';
-import { Screen } from '../../components/Screen';
+import { Pressable, StyleSheet, Text } from 'react-native';
 import { Heading } from '../../components/Heading';
+import { Panel } from '../../components/Panel';
+import { Screen } from '../../components/Screen';
 import { colors } from '../../constants/theme';
+
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const unavailable = () => Alert.alert('Login unavailable', 'This prototype is not connected to an authentication service. Nothing has been sent or saved; do not enter a real password.');
-  return <Screen>
-    <Pressable accessibilityRole="button" onPress={() => router.back()}><Text style={s.back}>‹ Back</Text></Pressable>
-    <Heading eyebrow="WELCOME BACK" title="Log in" subtitle="Pick up where you left off." />
-    <View style={{ gap: 6 }}><Text style={s.label}>Email address</Text><TextInput value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" autoComplete="email" placeholder="you@example.com" placeholderTextColor="#A59AA2" style={s.input} /></View>
-    <View style={{ gap: 6 }}><Text style={s.label}>Password</Text><TextInput value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" autoCorrect={false} textContentType="password" autoComplete="password" placeholder="Your password" placeholderTextColor="#A59AA2" style={s.input} /></View>
-    <Pressable accessibilityRole="button" style={s.primary} onPress={unavailable}><Text style={s.primaryText}>Log in</Text></Pressable>
-    <Pressable accessibilityRole="button" onPress={() => Alert.alert('Password reset unavailable', 'Password reset requires a verified backend account. This prototype cannot send a reset email.')}><Text style={s.link}>Forgot password?</Text></Pressable>
-    <Text style={s.note}>Prototype only. No credentials are transmitted or stored. Do not enter credentials you use elsewhere.</Text>
-  </Screen>;
+  return (
+    <Screen>
+      <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()}>
+        <Text style={styles.back}>‹ Back</Text>
+      </Pressable>
+      <Heading eyebrow="ACCOUNT ACCESS" title="Sign in" subtitle="Use CRUSH only after secure account services are connected." />
+
+      <Panel>
+        <Text style={styles.status}>Sign-in is not configured</Text>
+        <Text style={styles.body}>
+          CRUSH is not connected to an identity provider or trusted backend. You cannot sign in or recover an account from this build.
+        </Text>
+        <Text style={styles.body}>
+          No email or password is requested, transmitted, or saved here. Never enter a password you use elsewhere.
+        </Text>
+      </Panel>
+
+      <Panel>
+        <Text style={styles.step}>What must be connected first</Text>
+        <Text style={styles.body}>• A supported identity provider with production account access.</Text>
+        <Text style={styles.body}>• A server that validates provider sessions and enforces account eligibility.</Text>
+        <Text style={styles.body}>• Secure recovery, session revocation, and abuse protections.</Text>
+      </Panel>
+
+      <Pressable accessibilityRole="button" style={styles.primary} onPress={() => router.push('/(auth)/register')}>
+        <Text style={styles.primaryText}>View account setup</Text>
+      </Pressable>
+      <Pressable accessibilityRole="button" onPress={() => router.replace('/(auth)/welcome')}>
+        <Text style={styles.link}>Back to welcome</Text>
+      </Pressable>
+    </Screen>
+  );
 }
-const s = StyleSheet.create({ back: { fontSize: 17, color: colors.pink, fontWeight: '800', marginBottom: 8 }, label: { fontSize: 12, fontWeight: '800' }, input: { backgroundColor: 'white', borderWidth: 1, borderColor: colors.border, borderRadius: 13, padding: 15, fontSize: 15 }, primary: { backgroundColor: colors.pink, padding: 16, borderRadius: 14, alignItems: 'center', marginTop: 8 }, primaryText: { color: 'white', fontWeight: '900' }, link: { textAlign: 'center', color: colors.pink, fontWeight: '800', padding: 15 }, note: { color: colors.muted, fontSize: 12, lineHeight: 18 } });
+
+const styles = StyleSheet.create({
+  back: { fontSize: 17, color: colors.pink, fontWeight: '800', marginBottom: 8 },
+  status: { color: colors.pink, fontSize: 17, fontWeight: '900' },
+  step: { color: colors.black, fontWeight: '900' },
+  body: { color: colors.muted, fontSize: 13, lineHeight: 20 },
+  primary: { backgroundColor: colors.pink, padding: 16, borderRadius: 14, alignItems: 'center' },
+  primaryText: { color: 'white', fontWeight: '900' },
+  link: { textAlign: 'center', color: colors.pink, fontWeight: '800', padding: 12 },
+});
