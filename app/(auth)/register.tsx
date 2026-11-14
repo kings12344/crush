@@ -1,75 +1,107 @@
+import { useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput } from 'react-native';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text } from 'react-native';
 import { Heading } from '../../components/Heading';
 import { Panel } from '../../components/Panel';
 import { Screen } from '../../components/Screen';
 import { colors } from '../../constants/theme';
-
-const setupSteps = [
-  {
-    number: '01',
-    title: 'Secure sign-in',
-    status: 'Not connected',
-    detail: 'Choose an identity provider and connect a trusted backend before creating accounts.',
-  },
-  {
-    number: '02',
-    title: 'Age assurance',
-    status: 'Not started',
-    detail: 'A trusted server must confirm 18+ eligibility. A date of birth or checkbox alone is not verification.',
-  },
-  {
-    number: '03',
-    title: 'Student status',
-    status: 'Not started',
-    detail: 'An approved University of Eswatini process is required. A school email address alone is not proof.',
-  },
-];
+import { ensureProfile } from '../../lib/auth-profile';
+import { assertSupabaseConfigured, supabase } from '../../lib/supabase';
 
 export default function Register() {
+  const [displayName, setDisplayName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+
+  const register = async () => {
+    setNotice('');
+    const name = displayName.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (name.length < 2 || name.length > 40) {
+      setNotice('Your display name must be between 2 and 40 characters.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setNotice('Enter a valid email address.');
+      return;
+    }
+    if (password.length < 12) {
+      setNotice('Use a password with at least 12 characters.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setNotice('Your passwords do not match.');
+      return;
+    }
+
+    setBusy(true);
+    try {
+      assertSupabaseConfigured();
+      const { data, error } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: {
+          data: { display_name: name },
+          emailRedirectTo: 'crush://auth/confirmed',
+        },
+      });
+
+      if (error) {
+        setNotice('We could not create the account. Check the details and try again, or sign in if you already registered.');
+        return;
+      }
+
+      if (data.session && data.user) {
+        await ensureProfile(data.user);
+        router.replace('/(auth)/pending');
+        return;
+      }
+
+      setNotice('Your request was received. Check your email for the confirmation link, then return to CRUSH and sign in. If no email arrives, check spam or try again later.');
+    } catch {
+      setNotice('CRUSH could not finish account setup. Check your connection and try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <Screen>
-      <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()}>
+      <Pressable accessibilityRole="button" onPress={() => router.replace('/(auth)/welcome')}>
         <Text style={styles.back}>‹ Back</Text>
       </Pressable>
-      <Heading eyebrow="ACCOUNT SETUP" title="Create account" subtitle="The steps below must be connected before CRUSH can safely create a real account." />
-
+      <Heading eyebrow="JOIN CRUSH" title="Create account" subtitle="Start with your account details. Verification is a separate step." />
       <Panel>
-        <Text style={styles.status}>Setup is not available in this prototype</Text>
-        <Text style={styles.body}>
-          No account is created and no information is submitted. This screen does not ask for your email, date of birth, documents, or password.
-        </Text>
+        <Text style={styles.label}>Display name</Text>
+        <TextInput value={displayName} onChangeText={setDisplayName} autoCapitalize="words" maxLength={40} placeholder="What should people call you?" placeholderTextColor="#9A9097" style={styles.input} editable={!busy} />
+        <Text style={styles.label}>Email address</Text>
+        <TextInput value={email} onChangeText={setEmail} autoCapitalize="none" autoComplete="email" keyboardType="email-address" textContentType="emailAddress" placeholder="you@example.com" placeholderTextColor="#9A9097" style={styles.input} editable={!busy} />
+        <Text style={styles.label}>Password</Text>
+        <TextInput value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" autoComplete="new-password" textContentType="newPassword" placeholder="At least 12 characters" placeholderTextColor="#9A9097" style={styles.input} editable={!busy} />
+        <Text style={styles.label}>Confirm password</Text>
+        <TextInput value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry autoCapitalize="none" textContentType="newPassword" placeholder="Enter your password again" placeholderTextColor="#9A9097" style={styles.input} editable={!busy} />
+        {notice ? <Text accessibilityLiveRegion="polite" style={styles.notice}>{notice}</Text> : null}
+        <Pressable accessibilityRole="button" disabled={busy} style={styles.primary} onPress={register}>
+          {busy ? <ActivityIndicator color="white" /> : <Text style={styles.primaryText}>Create account</Text>}
+        </Pressable>
       </Panel>
-
-      {setupSteps.map((step) => (
-        <Panel key={step.number}>
-          <Text style={styles.number}>{step.number}  ·  {step.status}</Text>
-          <Text style={styles.title}>{step.title}</Text>
-          <Text style={styles.body}>{step.detail}</Text>
-        </Panel>
-      ))}
-
-      <Pressable accessibilityRole="button" style={styles.primary} onPress={() => router.push('/(auth)/verification')}>
-        <Text style={styles.primaryText}>Review verification requirements</Text>
-      </Pressable>
-      <Pressable accessibilityRole="button" onPress={() => router.push('/(auth)/login')}>
-        <Text style={styles.link}>Go to sign in</Text>
-      </Pressable>
-      <Text style={styles.note}>
-        CRUSH must keep age and student eligibility unverified until trusted services return an authorized server-side result.
-      </Text>
+      <Text style={styles.eligibility}>CRUSH is for adults aged 18+ who are eligible University of Eswatini students. Creating an account does not verify either requirement or unlock discovery.</Text>
+      <Pressable onPress={() => router.push('/(auth)/login')}><Text style={styles.link}>Already have an account? Sign in</Text></Pressable>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   back: { fontSize: 17, color: colors.pink, fontWeight: '800', marginBottom: 8 },
-  status: { color: colors.pink, fontSize: 16, fontWeight: '900' },
-  number: { color: colors.pink, fontSize: 11, fontWeight: '900', letterSpacing: 0.5 },
-  title: { color: colors.black, fontSize: 16, fontWeight: '900' },
-  body: { color: colors.muted, fontSize: 13, lineHeight: 20 },
-  primary: { backgroundColor: colors.pink, padding: 16, borderRadius: 14, alignItems: 'center' },
-  primaryText: { color: 'white', fontWeight: '900', textAlign: 'center' },
-  link: { textAlign: 'center', color: colors.pink, fontWeight: '800', padding: 12 },
-  note: { color: colors.muted, fontSize: 12, lineHeight: 18 },
+  label: { color: colors.black, fontSize: 13, fontWeight: '800', marginTop: 7 },
+  input: { borderWidth: 1, borderColor: colors.border, backgroundColor: '#FFF8FB', color: colors.black, padding: 14, borderRadius: 12, marginTop: 7, marginBottom: 8 },
+  primary: { backgroundColor: colors.pink, padding: 16, borderRadius: 14, alignItems: 'center', marginTop: 12, minHeight: 52, justifyContent: 'center' },
+  primaryText: { color: 'white', fontWeight: '900', fontSize: 16 },
+  notice: { color: colors.pinkDark, backgroundColor: colors.blush, padding: 11, borderRadius: 10, lineHeight: 18, marginTop: 8 },
+  eligibility: { color: colors.muted, fontSize: 11, lineHeight: 17, textAlign: 'center', marginVertical: 12 },
+  link: { color: colors.pink, fontWeight: '900', textAlign: 'center', padding: 10 },
 });
