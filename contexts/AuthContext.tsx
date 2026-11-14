@@ -25,19 +25,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let mounted = true;
+    let receivedAuthEvent = false;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!mounted) return;
+      // Auth events are authoritative. Do not let the initial getSession()
+      // promise overwrite a newer sign-in, sign-out, or token-refresh event.
+      receivedAuthEvent = true;
       setSession(nextSession);
       setLoading(false);
     });
 
     supabase.auth.getSession().then(({ data, error }) => {
-      if (!mounted) return;
+      if (!mounted || receivedAuthEvent) return;
       if (error) setSession(null);
       else setSession(data.session);
       setLoading(false);
     }).catch(() => {
-      if (mounted) {
+      if (mounted && !receivedAuthEvent) {
         setSession(null);
         setLoading(false);
       }
