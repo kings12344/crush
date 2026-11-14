@@ -14,6 +14,9 @@ export const isSupabaseConfigured =
 
 const manifestKey = 'crush.auth.manifest';
 const chunkSize = 400;
+const maxChunks = 100;
+const validSessionId = (id: unknown): id is string =>
+  typeof id === 'string' && /^[0-9]+-[a-z0-9]+$/.test(id);
 
 const secureSessionStorage = {
   async getItem(key: string): Promise<string | null> {
@@ -28,7 +31,7 @@ const secureSessionStorage = {
       return null;
     }
 
-    if (!parsed.id || !Number.isInteger(parsed.count) || parsed.count < 1 || parsed.count > 100) {
+    if (!validSessionId(parsed.id) || !Number.isInteger(parsed.count) || parsed.count < 1 || parsed.count > maxChunks) {
       await SecureStore.deleteItemAsync(manifestKey);
       return null;
     }
@@ -49,6 +52,9 @@ const secureSessionStorage = {
       chunks.push(codePoints.slice(index, index + chunkSize).join(''));
     }
     if (chunks.length === 0) chunks.push('');
+    if (chunks.length > maxChunks) {
+      throw new Error('Authentication session exceeds secure storage capacity.');
+    }
 
     const previous = await SecureStore.getItemAsync(manifestKey);
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -68,7 +74,7 @@ const secureSessionStorage = {
     if (previous) {
       try {
         const old = JSON.parse(previous) as { id?: string; count?: number };
-        if (old.id && Number.isInteger(old.count)) {
+        if (validSessionId(old.id) && Number.isInteger(old.count) && (old.count as number) > 0 && (old.count as number) <= maxChunks) {
           await Promise.all(Array.from({ length: old.count as number }, (_, index) =>
             SecureStore.deleteItemAsync(`crush.auth.${old.id}.${index}`).catch(() => undefined),
           ));
@@ -85,7 +91,7 @@ const secureSessionStorage = {
     if (!previous) return;
     try {
       const old = JSON.parse(previous) as { id?: string; count?: number };
-      if (old.id && Number.isInteger(old.count) && (old.count as number) > 0 && (old.count as number) <= 100) {
+      if (validSessionId(old.id) && Number.isInteger(old.count) && (old.count as number) > 0 && (old.count as number) <= maxChunks) {
         await Promise.all(Array.from({ length: old.count as number }, (_, index) =>
           SecureStore.deleteItemAsync(`crush.auth.${old.id}.${index}`).catch(() => undefined),
         ));
