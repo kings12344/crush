@@ -1,19 +1,38 @@
 import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Compass, Play, Heart, MessageCircle, UserRound } from 'lucide-react-native';
 import { colors } from '../../constants/theme';
+
 const tabs = [
-  {name:'discover', title:'Discover', icon:'compass-outline'},
-  {name:'reels', title:'Reels', icon:'play-circle-outline'},
-  {name:'matches', title:'Matches', icon:'heart-outline'},
-  {name:'inbox', title:'Inbox', icon:'chatbubble-outline'},
-  {name:'profile', title:'Profile', icon:'person-outline'}
+  { name: 'discover', title: 'Discover', Icon: Compass },
+  { name: 'reels', title: 'Reels', Icon: Play },
+  { name: 'matches', title: 'Matches', Icon: Heart },
+  { name: 'inbox', title: 'Inbox', Icon: MessageCircle },
+  { name: 'profile', title: 'Profile', Icon: UserRound },
 ] as const;
+
 export default function TabLayout() {
-  return <Tabs screenOptions={{headerShown:false, tabBarActiveTintColor:colors.pink,
-    tabBarInactiveTintColor:'#888', tabBarStyle:{height:64,paddingTop:8,paddingBottom:8},
-    tabBarLabelStyle:{fontSize:11,fontWeight:'600'}}}>
-    {tabs.map(t => <Tabs.Screen key={t.name} name={t.name} options={{
-      title:t.title, tabBarIcon:({color,size}) => <Ionicons name={t.icon as any} color={typeof color === 'string' ? color : '#888'} size={size}/>
-    }}/>)}
-  </Tabs>;
+  return (
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.pink,
+        tabBarInactiveTintColor: '#888',
+        tabBarStyle: { height: 64, paddingTop: 8, paddingBottom: 8 },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+      }}
+    >
+      {tabs.map(({ name, title, Icon }) => (
+        <Tabs.Screen
+          key={name}
+          name={name}
+          options={{
+            title,
+            tabBarIcon: ({ color, size }) => (
+              <Icon color={typeof color === 'string' ? color : '#888'} size={size} strokeWidth={2} />
+            ),
+          }}
+        />
+      ))}
+    </Tabs>
+  );
 }
