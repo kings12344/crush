@@ -84,7 +84,7 @@ export default function Discover() {
     } catch {
       Alert.alert(
         'Action unavailable',
-        'CRUSH could not process this action. Your account may still be awaiting age and student verification, or the service may be temporarily unavailable.',
+        'CRUSH could not process this action. Your account may still be awaiting trusted age verification, or the service may be temporarily unavailable.',
       );
     } finally {
       setActing(null);
@@ -156,7 +156,7 @@ export default function Discover() {
       </View>
       <Panel>
         <Text style={s.privacy}>Privacy first</Text>
-        <Text style={s.tip}>Only profiles that pass CRUSH's age and UNESWA student checks can appear. Your exact location is never shown.</Text>
+        <Text style={s.tip}>Only profiles that pass CRUSH's trusted 18+ age check can appear. Your exact location is never shown.</Text>
       </Panel>
 
       {loading ? (
@@ -205,7 +205,7 @@ export default function Discover() {
         <Panel>
           <Text style={s.name}>No eligible profiles yet</Text>
           <Text style={s.tip}>
-            CRUSH only shows accounts after both age and student verification are complete. There may not be verified profiles available in this discovery mode yet.
+            CRUSH only shows accounts after trusted 18+ age assurance is complete. There may not be age-verified profiles available in this discovery mode yet.
           </Text>
           <Pressable style={s.reset} onPress={() => void loadProfiles()}><Text style={s.likeText}>Refresh profiles</Text></Pressable>
         </Panel>
