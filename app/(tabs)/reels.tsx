@@ -137,7 +137,7 @@ export default function Reels() {
         <Text style={s.loginText}>Already a member? Sign in</Text>
       </Pressable>
     </View> : null}
-    <Text style={s.note}>Demo reels are samples, not real student uploads. Comments require sign-in plus completed age and UNESWA student verification. Public uploads and moderation tools are still being developed.</Text>
+    <Text style={s.note}>Demo reels are samples, not real user uploads. Comments require sign-in plus completed trusted 18+ age assurance. Public uploads and moderation tools are still being developed.</Text>
   </Screen>;
 }
 
