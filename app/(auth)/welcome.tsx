@@ -2,11 +2,12 @@ import { router } from 'expo-router';
 import { Text, View, Pressable, StyleSheet } from 'react-native';
 import { Screen } from '../../components/Screen';
 import { colors } from '../../constants/theme';
+import { Heart } from 'lucide-react-native';
 
 export default function Welcome() {
   return (
     <Screen style={styles.wrap}>
-      <View style={styles.logo}><Text style={styles.heart}>♥</Text></View>
+      <View style={styles.logo}><Heart size={48} color={colors.pink} strokeWidth={2.1} /></View>
       <Text style={styles.brand}>CRUSH</Text>
       <Text style={styles.tag}>MEET YOUR PEOPLE. FIND YOUR PERSON.</Text>
       <Text style={styles.description}>A campus community for real friendships, meaningful connections and moments worth sharing.</Text>
