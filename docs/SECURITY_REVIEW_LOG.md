@@ -56,6 +56,7 @@ Scope: repository source and workflow review, Supabase schema/catalog inspection
 - Inspected SECURITY DEFINER functions pin an empty `search_path`; none of the inspected functions is executable by anon.
 - The `profile-photos` bucket is private, has a 5 MiB limit and permits JPEG, PNG and WebP. Storage object policies scope operations to the authenticated user's folder.
 - Targeted GitHub searches for `SUPABASE_SERVICE_ROLE_KEY` and `service_role` returned no matches. This is a targeted search, not a complete historical secret scan.
+- The current npm audit reports three moderate findings associated with the same minimatch advisory in Expo build tooling; this is not three separate advisories. Expo maintainers have assessed the affected use as not exploitable through app inputs.
 
 ## Release gate
 
