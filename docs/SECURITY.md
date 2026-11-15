@@ -2,6 +2,8 @@
 
 **Current status: development integration; not cleared for public users or sensitive personal data.** The live Supabase project has age-only discovery/matching, private mutual-match messaging, age-gated community reads, and a server-checked age-status gate in the mobile app. UNESWA student verification is not an eligibility requirement. A trusted 18+ age-verification provider is not connected, there are no Auth users yet, and device/two-account adversarial tests have not run.
 
+See [SECURITY_REVIEW_LOG.md](SECURITY_REVIEW_LOG.md) for the dated threat model, prioritized findings, evidence, remediation status and release gate.
+
 ## Assets to protect
 
 Account identity and email; age-assurance outcomes and minimum necessary evidence; private photos and messages; unmatched Secret Crush sender identities; optional campus information; reports and moderator notes; authentication/session tokens; and privacy-safe notification content.
