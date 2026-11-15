@@ -2,32 +2,6 @@ name: Android standalone release APK
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches:
-      - "feat/supabase-backend-foundation"
-    paths:
-      - ".github/workflows/android-standalone-release.yml"
-      - "app.json"
-      - "package.json"
-      - "package-lock.json"
-      - "babel.config.js"
-      - "app/**"
-      - "src/**"
-      - "components/**"
-      - "assets/**"
-  push:
-    branches:
-      - "build/android-standalone-release"
-    paths:
-      - ".github/workflows/android-standalone-release.yml"
-      - "app.json"
-      - "package.json"
-      - "package-lock.json"
-      - "babel.config.js"
-      - "app/**"
-      - "src/**"
-      - "components/**"
-      - "assets/**"
 
 permissions:
   contents: read
@@ -41,10 +15,9 @@ jobs:
     name: Build standalone Android APK
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    # These are public client values; never place a Supabase secret/service-role key here.
     env:
       EXPO_PUBLIC_SUPABASE_URL: https://dtlbpkcaojctamelogbv.supabase.co
-      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_p-LB4WlqwWuUTgvqSN11Yw_RpgzZqWm
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable-p-LB4WlqwWuUTgvqSN11Yw_RpgzZqWm
 
     steps:
       - name: Checkout source
