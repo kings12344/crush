@@ -45,7 +45,7 @@ jobs:
           packages: platform-tools
 
       - name: Install locked dependencies
-        run: npm ci --no-audit --no-fund
+        run: npm install --no-audit --no-fund
 
       - name: Dependency security gate
         run: npm audit --audit-level=high
