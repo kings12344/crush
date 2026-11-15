@@ -7,6 +7,7 @@
 - Corrected registration and login eligibility copy to match the current age-only branch behavior.
 - Added network-failure handling to email-confirmation and password-reset flows so rejected requests do not leave the UI indefinitely loading or the password button stuck busy.
 - Connected the Matches tab to the existing guarded get_my_conversations RPC. It now shows active mutual matches, a useful empty/error state and a direct route into the private chat screen.
+- Updated Matches and Inbox to refresh when their tabs regain focus, preventing stale match/conversation lists after new activity.
 - Kept the existing PKCE and SecureStore session design unchanged.
 
 ### Cybersecurity Engineer
