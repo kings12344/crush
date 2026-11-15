@@ -52,7 +52,7 @@ export default function Register() {
       });
 
       if (error) {
-        setNotice(error.message || 'We could not create the account. Please try again.');
+        setNotice('We could not create the account with those details. If you already have an account, sign in or use password recovery.');
         return;
       }
 
@@ -64,7 +64,7 @@ export default function Register() {
 
       setNotice('Your request was received. Check your email for the confirmation link, then return to CRUSH and sign in. If no email arrives, check spam or try again later.');
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : 'CRUSH could not finish account setup. Check your connection and try again.');
+      setNotice('CRUSH could not finish account setup. Check your connection and try again.');
     } finally {
       setBusy(false);
     }
@@ -77,7 +77,7 @@ export default function Register() {
       await startGoogleSignIn();
       setBusy(false);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : 'Google sign-up is unavailable. Please try again.');
+      setNotice('Google sign-up is unavailable right now. Please try again later.');
       setBusy(false);
     }
   };
@@ -105,7 +105,7 @@ export default function Register() {
           <Text style={styles.googleText}>Continue with Google</Text>
         </Pressable>
       </Panel>
-      <Text style={styles.eligibility}>CRUSH is for adults aged 18+ who are eligible University of Eswatini students. Creating an account does not verify either requirement or unlock discovery.</Text>
+      <Text style={styles.eligibility}>CRUSH is for adults aged 18+ in Eswatini. Creating an account does not establish age or unlock age-restricted features.</Text>
       <Pressable onPress={() => router.push('/(auth)/login')}><Text style={styles.link}>Already have an account? Sign in</Text></Pressable>
     </Screen>
   );
