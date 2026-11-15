@@ -44,6 +44,7 @@ Scope: repository source and workflow review, Supabase schema/catalog inspection
 | CR-008 | Low / Info | Supabase Advisor reports three RLS-enabled tables without policies: `private.action_rate_limits`, `public.community_posts`, and `public.community_comments`. | Retain default-deny. Direct client table grants are absent; narrow RPCs are the intended access path. Do not add permissive policies just to silence the linter. | Reviewed — intentional |
 | CR-009 | Info | Supabase Advisor reports 13 authenticated SECURITY DEFINER RPC warnings. Catalog inspection found empty `search_path` on the inspected functions and no anon EXECUTE grants. | Keep every function explicitly actor-bound and fully qualified; add authorization tests whenever an RPC changes. | Reviewed at catalog level; behavioral coverage incomplete |
 | CR-010 | Info | Supabase Performance Advisor reports 12 unused indexes on a new, near-zero-traffic project. | Do not drop them without representative query plans and workload evidence. | Monitored |
+| CR-012 | Medium | Registration passed raw Supabase Auth errors to the user, which could reveal account existence or internal failure details; Google OAuth screens also surfaced raw provider errors. | Replaced registration and OAuth error details with generic user-facing messages; aligned registration/login copy with age-only eligibility. | Committed to PR branch; CI pending |
 
 ## Verified controls observed on 16 November 2026
 
