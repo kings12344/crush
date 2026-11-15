@@ -6,7 +6,7 @@ The Android native project is generated during CI from the Expo configuration an
 
 1. Open **Actions** in the GitHub repository.
 2. Select **Android standalone release APK**.
-3. Run the workflow on the `build/android-standalone-release` branch (or use the automatic push trigger).
+3. Run the workflow on the branch containing the build you want to test (the current integration branch is `feat/production-readiness`), or use the automatic push trigger.
 4. Wait for the job to finish successfully.
 5. Download the `crush-android-standalone-release` artifact and extract `app-release.apk`.
 6. Transfer the APK to the Android phone and install it.
@@ -19,4 +19,4 @@ This is a standalone release-mode test build, not a production-distribution sign
 
 ## Product safety
 
-This build does not remove CRUSH's authentication, age/student verification, moderation, privacy or production-readiness launch gates. Do not invite public users or collect real identity documents until those gates are completed and independently tested.
+This build does not remove CRUSH's authentication, trusted 18+ age-assurance, moderation, privacy or production-readiness launch gates. Do not invite public users or collect real identity documents until those gates are completed and independently tested.
