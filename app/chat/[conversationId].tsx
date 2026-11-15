@@ -37,12 +37,6 @@ export default function ConversationScreen() {
 
   const currentUserId = session?.user.id ?? '';
 
-  const refreshMessages = useCallback(async (peerName: string) => {
-    if (!conversationId || typeof conversationId !== 'string') return;
-    const rows = await getConversationMessages(conversationId);
-    setMessages(rows.map((row) => toChatMessage(row, currentUserId, peerName)));
-  }, [conversationId, currentUserId]);
-
   useEffect(() => {
     let active = true;
     let channel: ReturnType<typeof subscribeToConversation> | undefined;
@@ -88,12 +82,22 @@ export default function ConversationScreen() {
     if (!message || !conversationId || typeof conversationId !== 'string' || !conversation) return;
     setError('');
     try {
-      await sendConversationMessage(conversationId, message.text);
-      await refreshMessages(conversation.peer_name);
+      const messageId = await sendConversationMessage(conversationId, message.text);
+      const confirmed: IMessage = {
+        ...message,
+        _id: messageId,
+        createdAt: new Date(),
+        user: { _id: currentUserId, name: 'You' },
+        sent: true,
+        pending: false,
+      };
+      setMessages((current) => current.some((item) => String(item._id) === messageId)
+        ? current
+        : [confirmed, ...current]);
     } catch {
       setError('Message not sent. Check your connection or conversation access and try again.');
     }
-  }, [conversationId, conversation, refreshMessages]);
+  }, [conversationId, conversation, currentUserId]);
 
   const chatUser = useMemo(() => ({ _id: currentUserId, name: 'You' }), [currentUserId]);
 
