@@ -47,7 +47,7 @@ export default function Login() {
     try {
       await startGoogleSignIn();
       setBusy(false);
-    } catch (error) {
+    } catch {
       setNotice('Google sign-in is unavailable right now. Please try again later.');
       setBusy(false);
     }
