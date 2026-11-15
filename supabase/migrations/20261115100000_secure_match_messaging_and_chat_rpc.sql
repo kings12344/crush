@@ -1,5 +1,5 @@
 -- CRUSH messaging UI integration: enforce verified, unblocked match access on every message read/write.
-create or replace function public.is_conversation_available(p_conversation_id uuid)
+create or replace function private.is_conversation_available(p_conversation_id uuid)
 returns boolean
 language sql
 stable
@@ -26,8 +26,9 @@ as $$
       )
   );
 $$;
-revoke all on function public.is_conversation_available(uuid) from public, anon;
-grant execute on function public.is_conversation_available(uuid) to authenticated;
+revoke all on function private.is_conversation_available(uuid) from public, anon, authenticated;
+grant usage on schema private to authenticated;
+grant execute on function private.is_conversation_available(uuid) to authenticated;
 
 drop policy if exists "messages_select_participant" on public.messages;
 create policy "messages_select_verified_unblocked_match"
@@ -67,7 +68,7 @@ as $$
     limit 1
   ) latest on true
   where (m.user_low = auth.uid() or m.user_high = auth.uid())
-    and public.is_conversation_available(c.id)
+    and private.is_conversation_available(c.id)
   order by coalesce(latest.created_at, c.created_at) desc
   limit 100;
 $$;
@@ -91,7 +92,7 @@ begin
   if p_conversation_id is null or length(v_body) < 1 or length(v_body) > 5000 then
     raise exception using errcode = '22023', message = 'Message must be between 1 and 5000 characters.';
   end if;
-  if not public.is_conversation_available(p_conversation_id) then
+  if not private.is_conversation_available(p_conversation_id) then
     raise exception using errcode = '42501', message = 'This conversation is unavailable.';
   end if;
 
