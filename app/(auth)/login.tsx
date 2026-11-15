@@ -46,6 +46,7 @@ export default function Login() {
     setBusy(true);
     try {
       await startGoogleSignIn();
+      setBusy(false);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Google sign-in is unavailable. Please try again.');
       setBusy(false);
