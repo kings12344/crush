@@ -24,11 +24,27 @@ Official references: [Resend + Supabase SMTP](https://resend.com/docs/send-with-
 
 Trusted age assurance is mandatory. Enrollment or student verification is not required for CRUSH eligibility.
 
-**Didit** is a conditional candidate for ID/document-based age decisions. Its technical docs describe document-check capability, but the exact Eswatini document types, Eswatini customer eligibility, pricing and legal suitability have not been independently confirmed. No Didit account, API key, webhook or production integration is configured. Before selection, confirm Eswatini onboarding, age-estimation/ID-verification method, false-accept/false-reject handling, data location, retention/deletion, subprocessors and cost. Keep only minimum outcome/reference metadata in CRUSH; do not retain raw identity documents unless a separate legal/privacy review requires it.
+### Recommended candidate: Didit Age Verification (pending owner approval)
 
-Any provider integration must use a server-side session creation flow and signed server-to-server result verification. The mobile client must never submit or set a verified status. The current app and database remain fail-closed until that trusted integration exists.
+Didit's current official documentation is unusually well matched to CRUSH's launch market:
 
-Official references: [Didit ID verification overview](https://docs.didit.me/core-technology/id-verification/overview), [Didit pricing](https://docs.didit.me/getting-started/pricing), [Didit React Native SDK](https://docs.didit.me/integration/sdks), [Didit sessions API](https://docs.didit.me/sessions-api/create-session).
+- Its Africa document-coverage list explicitly includes Eswatini (SWZ) passports, national ID cards and driver's licences. NFC chip reading is not listed for Eswatini; normal document capture is supported.
+- Its age-verification flow can run selfie-based age estimation with passive liveness first, then route borderline cases to document verification. The provider documents a configurable 18+ threshold and signed result webhooks.
+- Published prices are $0.10 for age estimation and $0.15 for an ID document check. Didit advertises 500 free age verifications each month and no card requirement to start; its general pay-as-you-go pricing lists no monthly minimum. Its own blended estimate is about $0.115 per user when roughly 10% require the document fallback. Treat this as a vendor-published estimate, not a guaranteed CRUSH cost.
+- The documented webhook uses HMAC-SHA256 over the raw request body with the `X-Signature-V2` header. The integration must verify this before trusting the payload.
+
+This is a recommendation, not a connected or approved provider. No Didit account, API key, workflow, webhook or production integration is configured. Before enabling it, the owner must approve the transfer of selfies/identity data to Didit, review the DPA/subprocessors and Eswatini data-transfer implications, confirm account onboarding, and agree the retention policy. Didit states that production data is stored in the EU by default and that retention is indefinite unless configured; configure the shortest suitable retention and delete session media after the minimum required period. Store only the verified age outcome, provider reference and timestamps in CRUSH.
+
+Proposed integration pattern:
+1. The authenticated app asks a Supabase Edge Function to create a Didit age-verification session.
+2. The function derives the user ID from the Supabase access token, sets it as `vendor_data`, and returns only the hosted `session_url`.
+3. Didit sends a signed webhook to a separate Supabase Edge Function. Verify `X-Signature-V2` against the raw bytes before parsing.
+4. Confirm the expected workflow, session/user binding, final status, liveness and age decision. Never accept a client-supplied status.
+5. Update only that user's private `age_status` and verification timestamp. The existing app RPC then unlocks access on refresh.
+
+The mobile client must never submit or set a verified status. The app and database remain fail-closed until the trusted integration is deployed and tested.
+
+Official references: [Didit age-verification flow and webhook specification](https://didit.me/solutions/age-verification/), [Eswatini document coverage](https://help.didit.me/documents-coverage/document-coverage-africa), [Didit public pricing](https://didit.me/pricing/), [Didit sessions API](https://docs.didit.me/sessions-api/create-session), [Didit webhooks](https://docs.didit.me/integration/webhooks).
 
 ## Media and video
 
