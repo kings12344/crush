@@ -46,6 +46,11 @@ The Android debug APK GitHub Actions workflow runs on pushes to main, pull reque
 
 This is a **debug build for testing**, signed with a temporary runner-generated debug key. It is not release-signed or published to Google Play. A later build may not update over an APK signed by a different temporary key; uninstall the older test build first if Android refuses the update. Artifacts are retained for 30 days.
 
+
+## Standalone Android APK (no Metro)
+
+The **Android standalone release APK** workflow generates the Android native project, runs Gradle's `assembleRelease` task, and uploads the `crush-android-standalone-release` artifact. This release-mode test build is intended to include the JavaScript bundle, so it should not require Metro. See [docs/ANDROID_RELEASE_BUILD.md](docs/ANDROID_RELEASE_BUILD.md) for installation instructions. The APK still needs a successful CI run and physical-device testing before it can be considered verified. This is not a production signing setup.
+
 ## Product and privacy rules
 
 - Strictly 18+; eligibility must be enforced by trusted services, not a client checkbox.
