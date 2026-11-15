@@ -45,7 +45,7 @@ jobs:
           packages: 'platform-tools'
 
       - name: Install JavaScript dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: TypeScript check
         run: npm run typecheck
