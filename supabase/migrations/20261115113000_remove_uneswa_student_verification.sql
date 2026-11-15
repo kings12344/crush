@@ -256,7 +256,7 @@ returns uuid
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   v_actor uuid := auth.uid();
   v_body text := btrim(coalesce(p_body, ''));
@@ -312,7 +312,7 @@ begin
   returning id into v_comment_id;
   return v_comment_id;
 end;
-$;
+$$;
 
 comment on function public.discover_profiles(text, integer) is
 'Returns safe profile fields for visible, age-verified accounts. University student verification is not required.';
