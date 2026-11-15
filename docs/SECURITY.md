@@ -1,64 +1,62 @@
 # CRUSH Security Baseline and Launch Gate
 
-**Current status: development integration — not cleared for public users or sensitive personal data.** The live Supabase project now has authenticated age-only discovery and matching RPCs, private match messaging, age-gated community reads, and a server-checked age-status gate in the app. UNESWA student verification is not required. A trusted age-verification provider is still not connected, and physical-device, two-account adversarial, moderation and account-rights testing remain incomplete.
+**Current status: development integration; not cleared for public users or sensitive personal data.** The live Supabase project has age-only discovery/matching, private mutual-match messaging, age-gated community reads, and a server-checked age-status gate in the mobile app. UNESWA student verification is not an eligibility requirement. A trusted 18+ age-verification provider is not connected, there are no Auth users yet, and device/two-account adversarial tests have not run.
 
-## Protect these assets
+## Assets to protect
 
-Account identity and email; age-assurance outcomes and any minimum necessary age evidence; private photos and messages; unmatched Secret Crush sender identities; optional campus information; reports and moderator notes; authentication/session tokens; and push-notification content.
+Account identity and email; age-assurance outcomes and minimum necessary evidence; private photos and messages; unmatched Secret Crush sender identities; optional campus information; reports and moderator notes; authentication/session tokens; and privacy-safe notification content.
 
 ## Required architecture
 
-1. **Identity and sessions.** Use a maintained identity provider with Authorization Code + PKCE, verified redirect URIs, email verification, secure recovery, abuse/rate limiting, and short-lived access tokens. Never implement password hashing or token cryptography yourself. CRUSH uses Supabase Auth. Its JS client persists the serialized session through an OS-backed SecureStore adapter on native platforms; do not fall back to AsyncStorage for credentials. The adapter splits the serialized session into small chunks because native secure-storage platforms can reject large values. Validate this on physical Android and iOS devices, test interrupted writes and sign-out, and configure short session lifetimes/revocation appropriately. If the threat model requires access tokens to exist only in memory, design and test a refresh-token-only storage adapter rather than assuming the current SDK storage format does that.
-2. **Server-side authorization.** Authenticate and authorize every endpoint and Realtime channel. Derive user identity from the verified token, never a client-supplied user ID. Enforce account status, 18+ eligibility, verified-student rules, match membership, visibility, and both directions of blocks on the server. Use deny-by-default authorization, least-privilege DB roles, parameterized queries, request schemas, bounded pagination, payload limits, and safe error responses. Apply PostgreSQL RLS with explicit policies that match the access model.
-3. **Dating and Secret Crush privacy.** Return only fields required for discovery. Do not expose exact birth date, email, legal name, verification evidence, precise location, internal moderation state, or unmatched crush sender IDs. A secret-crush reveal must be atomic and occur only after both eligible users reciprocate. Prevent interactions, chats, presence, and calls if either user blocks the other or a match is revoked. Test these rules against direct API requests, not only UI flows.
-4. **Trusted age assurance.** Client DOB checks and checkboxes are never proof. Select a lawful, proportionate provider for launch jurisdictions and verify results through a signed server-to-server callback or equivalent trusted mechanism. Never accept client-supplied `verified` status. Keep evidence in a private, access-audited store with short-lived access, type/size validation, retention/deletion controls and no public URLs. Prefer retaining only an outcome and provider reference rather than raw documents.
-5. **Transport, storage, and secrets.** Require HTTPS/TLS for all environments beyond localhost. Store provider/database secrets only in server secret management; mobile EXPO_PUBLIC_* variables are public. The Supabase publishable key is designed for client use and is not an authorization boundary. Encrypt sensitive backups and private media; rotate secrets and have a tested incident response and restore process. Avoid collecting exact location. Redact sensitive values from telemetry and crash tools.
-6. **Safety and moderation.** Production requires real block/report endpoints, review queues with least-privilege staff access, evidence retention rules, appeals/escalation policies, abuse throttles, and an emergency disclaimer. A block must take effect server-side across discovery, messaging, calls, and notifications. Reports must not notify the reported user of the reporter's identity. Provide account deletion/data export and explain retention exceptions.
-7. **Client hardening.** Validate all remote data at runtime and render user content as plain text. Use allowlisted deep links, safe WebViews, restrictive permissions, no cleartext traffic, and minimal data collection. Review Android backup/data extraction and iOS backup/keychain behavior. Consider certificate pinning only with a robust key-rotation/recovery plan; pinning without operational rotation can lock users out. Use platform security updates and release signing protections.
+1. **Identity and sessions.** Use Supabase Auth with PKCE, verified redirect URIs, email confirmation, secure recovery, abuse/rate limiting and appropriate session expiry/revocation. CRUSH persists native sessions through OS-backed SecureStore; do not fall back to AsyncStorage for credentials. Validate interrupted writes, recovery and sign-out on physical Android and iOS devices.
+2. **Server-side authorization.** Authenticate and authorize every endpoint and Realtime channel. Derive identity from the verified token, never a client-supplied user ID. Enforce trusted 18+ eligibility, account state, visibility, match membership and both directions of blocks server-side. Use deny-by-default authorization, least-privilege roles, parameterized queries, bounded pagination, payload limits and safe errors.
+3. **Dating and Secret Crush privacy.** Return only fields required for discovery. Never expose exact birth date, email, legal name, age evidence, precise location, internal moderation state or unmatched Secret Crush sender IDs. Reveal a Secret Crush only after both users reciprocate. Prevent interactions, chats and calls if either user blocks the other or a match is revoked.
+4. **Trusted age assurance.** Client DOB checks, checkboxes, email domains and user-editable metadata are never proof. Select a lawful, proportionate provider for launch jurisdictions and verify results through a signed server-to-server callback or equivalent trusted mechanism. Never accept a client-supplied `verified` status. Keep evidence in private, access-audited storage with short-lived access, type/size validation and a retention/deletion policy. Prefer retaining only an outcome and provider reference.
+5. **Transport, storage and secrets.** Require HTTPS/TLS beyond localhost. Store provider/database secrets only in server-side secret management; mobile `EXPO_PUBLIC_*` variables are public. The Supabase publishable key is not an authorization boundary. Encrypt sensitive backups/private media, rotate secrets, test restore and incident response, avoid precise location, and redact sensitive telemetry.
+6. **Safety and moderation.** Production requires a staffed report-review queue, least-privilege moderator roles, audit logs, retention rules, appeals/escalation, abuse throttles and emergency response. Blocks must take effect server-side across discovery, messaging, calls and notifications. Reports must not reveal the reporter to the reported user. Provide account deletion and data export.
+7. **Client hardening.** Validate remote data at runtime and render user content as plain text. Use allowlisted deep links, safe WebViews, restrictive permissions, no cleartext traffic and minimal data collection. Review Android backup/data extraction and iOS backup/keychain behavior. Use platform security updates and protected production signing.
 
 ## Database controls currently deployed
 
-- All 10 public application tables have RLS enabled.
-- private.verification_records has RLS enabled and an explicit deny policy for anon and authenticated; it is server-only.
-- private.action_rate_limits has RLS enabled, no client policy, and no client table grants. This is intentional default-deny: only trusted database functions should update rate-limit state.
-- Profiles are readable only by their owner. Client profile insert/update policies require visibility = hidden.
-- Direct client INSERT grants on likes and secret_crushes are revoked. User discovery and dating actions go through authenticated, rate-limited RPCs that validate verification state, profile visibility, dating preferences and both block directions.
+- RLS is enabled on all 12 public application tables.
+- `private.verification_records` and `private.action_rate_limits` have RLS enabled and no direct client table grants.
+- Community posts/comments also have RLS enabled with no direct client grants or policies. Narrow SECURITY DEFINER RPCs are the only application read/write path.
+- Profiles are readable only by their owner through direct table access. Client profile insert/update policies require visibility = hidden.
+- Direct client INSERT grants on likes and Secret Crush are revoked. Authenticated, rate-limited RPCs enforce age status, profile visibility, preferences and both block directions.
 - Clients cannot create matches or conversations directly; guarded mutual-action RPCs create them only after reciprocal interest.
-- Message reads/inserts require match participation and no block in either direction.
-- The profile-photos Storage bucket is private, limited to JPEG/PNG/WebP and 5 MiB, and owner-folder scoped. This does not replace server-side content inspection before any future public delivery.
+- Message reads are protected by RLS and a private conversation guard. The guard requires both match participants to remain age-verified and unblocked. Direct client message INSERT is revoked; sending uses an actor-bound, rate-limited RPC.
+- Community feed/comment reads and comment creation require an authenticated, age-verified user. Anonymous execution is revoked.
+- The `profile-photos` Storage bucket is private, limited to JPEG/PNG/WebP and 5 MiB, and owner-folder scoped.
 
-### Supabase Advisor review — 15 November 2026
+## Supabase Advisor review — 15 November 2026
 
-The live Security Advisor currently returns:
+- **3 INFO notices:** RLS-enabled tables without policies: private rate-limit state and the two community tables. This is intentional default-deny; direct client grants are absent and narrow RPCs control access. Do not add permissive policies merely to silence the notices.
+- **13 WARN notices:** authenticated execution of SECURITY DEFINER RPCs. These are intended application operations. Catalog checks confirm every inspected SECURITY DEFINER function pins an empty `search_path`, no SECURITY DEFINER function is executable by `anon`, and actor-bound functions derive identity from `auth.uid()`. These checks are not a substitute for code review or adversarial behavior tests.
+- **12 performance INFO notices:** unused indexes. The project has negligible traffic; retain them until representative query plans justify changes.
+- No health advisor findings were returned.
 
-- **1 INFO:** RLS is enabled on private.action_rate_limits but no policies exist. This is intentional because the table is private, client schema access/table grants are revoked, and the rate-limit helper is not executable by client roles. Do not add a permissive policy merely to silence this notice.
-- **7 WARN notices:** the seven intended authenticated RPCs (block_user, discover_profiles, get_blocked_users, send_like, send_secret_crush, submit_report, unblock_user) are SECURITY DEFINER functions. A targeted catalog/code review found that each sets an empty search_path, uses fully qualified table/function references, derives the actor from auth.uid(), and is not executable by anon. Authenticated execution is the intended application interface; direct table writes for sensitive actions are restricted. These generic warnings are not proof that the functions are safe: keep their code review and authorization tests as a release gate, and re-review any future SECURITY DEFINER function.
-- The two private SECURITY DEFINER helpers (consume_action_rate_limit and initialize_verification_record) also pin an empty search_path and have no anon/authenticated EXECUTE grants. The former is called only from trusted public RPCs; the latter is trigger-only.
-- The Performance Advisor reports 10 unused-index informational notices. The schema is new and has negligible traffic; do not drop indexes until representative query plans and workload measurements justify it.
+The database review is catalog/code inspection, not a complete penetration test. The hosted project currently has zero Auth users and zero profiles, so two-account behavior, direct API abuse, race conditions and end-to-end authorization have not yet been demonstrated. The committed pgTAP suite contains 29 catalog assertions but has not been run because pgTAP is not installed in the hosted project.
 
-The current database review is catalog/code inspection, not a complete penetration test. The hosted project has no test accounts, so two-account behavior, direct API abuse, race conditions and end-to-end authorization have not yet been demonstrated. The committed pgTAP suite now contains 29 catalog assertions but has not been run in CI or a local Supabase test stack because pgTAP is not installed in the hosted project.
+## Release checklist — all required
 
-These controls are a foundation, not proof of complete authorization. RLS policy behavior and every write path still need adversarial integration tests.
+- [ ] Threat model, data inventory, launch-jurisdiction privacy review, retention schedule and incident owner approved.
+- [ ] Trusted 18+ age provider and signed server-side result verification integrated; bypass tests pass.
+- [ ] Supabase Data API exposure, Auth redirect allowlist and production SMTP verified.
+- [ ] Automated tests cover broken object authorization, account enumeration, rate limits, session revocation, replay, block bypass, match revocation and Secret Crush identity disclosure.
+- [ ] Two-account tests pass for discovery, reciprocal/non-reciprocal likes, Secret Crush, messaging, comments and block revocation.
+- [ ] Moderator/admin access is least-privilege and audited; report queue, account deletion/export and retention controls work.
+- [ ] Dependency audit, static analysis, secret scan, API security tests and mobile MASVS-aligned review completed; high/critical findings resolved or risk-accepted.
+- [ ] Privacy-safe logs/analytics, alerting, backup restore, incident-response drills and operational ownership verified.
+- [ ] Real-device iOS/Android tests cover secure token storage, app-switcher screenshots, deep links, network failure, logout, messaging and accessibility.
+- [ ] Production release builds are signed with protected credentials; no demo profiles/actions are presented as real users/activity.
 
-## Release checklist (all required)
+## Current implementation and known gaps
 
-- [ ] Threat model reviewed; data inventory, jurisdiction/privacy review, retention schedule, and incident owner approved.
-- [ ] Backend and provider configuration deployed separately from the mobile bundle; production secrets cannot be extracted from the app.
-- [ ] Automated tests cover broken object authorization, account enumeration, rate limits, session rotation/revocation, replay, block bypass, match revocation, and Secret Crush identity disclosure.
-- [ ] Age-verification bypass and evidence-access tests pass; moderator/admin access is least privilege and audited.
-- [ ] Dependency audit, static analysis, secret scan, API security tests, and mobile MASVS-aligned review completed; high/critical findings resolved or explicitly risk-accepted.
-- [ ] Privacy-safe logs/analytics, alerting, backup restore, account deletion, data export, and incident-response drills verified.
-- [ ] Real-device iOS/Android tests cover secure token storage, app-switcher screenshots, deep links, network failure, logout, and accessibility.
-- [ ] No demo profiles/actions appear as real users/actions and no live user data is used in demo builds.
-
-## Current implementation
-
-- **Dependency audit remains open (2026-11-14):** The Expo SDK 58 dependency audit reports 3 moderate advisories and no high or critical findings. Do not force a major-version audit fix. Resolve compatible upstream updates and re-run the audit before release.
-- Supabase Auth code implements email/password signup, sign-in, email confirmation and password recovery/reset. Redirect URLs still need to be allowlisted in the Supabase dashboard. Device-level validation remains outstanding.
-- The AuthContext initialization now ignores a late getSession() result if an auth-state event has already arrived, preventing a stale initial read from overwriting a newer sign-in/sign-out/token event. TypeScript/CI verification is still required after this change.
-- The mobile app routes signed-in users to a pending-access screen. It does not unlock discovery or matching based on client-supplied information.
-- Profiles created from Auth are hidden. The app reads the age status through an authenticated RPC and fails closed; no trusted age-verification provider/callback is connected yet.
-- Direct table writes for likes and Secret Crush are disabled; authenticated RPCs implement guarded discovery, like and mutual Secret Crush actions. Two-account adversarial tests remain required before production use.
-- Reporting and blocking have authenticated RPCs with server-derived actor identity and rate limits. The report review queue, moderation operations, account deletion/export and full messaging experience are incomplete.
-- Discovery/reels/inbox sample interactions and four privacy-preview switches remain local prototype features; they do not affect a real account or server.
-- The SQL migrations are tracked under supabase/migrations/ and have been applied to the CRUSH Supabase project.
+- The Expo SDK 58 dependency audit previously reported 3 moderate advisories and no high/critical findings. The Android CI workflow now uses `npm ci` and blocks high-or-critical audit findings. Re-run and review the full audit before release; do not use `npm audit fix --force`.
+- Supabase Auth implements email/password signup, sign-in, email confirmation and password recovery/reset. Redirect URLs still need dashboard allowlisting; a production SMTP sender is not configured.
+- The app checks age status through `get_my_age_verification_status()` after sign-in and on app foreground. Network/RPC errors fail closed. No trusted provider/callback exists yet, so new accounts remain pending.
+- UNESWA student verification has been removed from eligibility logic. The legacy `student_status` column remains only for compatibility; current SECURITY DEFINER functions do not consult it.
+- Discovery, likes, Secret Crush, reporting, blocking, private match messaging and age-gated community RPCs are deployed. Two-account adversarial tests remain outstanding.
+- The moderation review queue, admin operations, account deletion/export and retention jobs are incomplete.
+- Media upload/transcoding/moderation, calls, push notifications, events and payments are not production features yet.
+- The current Supabase project has no Auth users or profiles. Do not use real user data until the provider, safety, privacy and operational launch gates are complete.
