@@ -1,5 +1,5 @@
 import { AppState } from 'react-native';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
@@ -25,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [ageStatus, setAgeStatus] = useState<AgeVerificationStatus>('loading');
+  const ageCheckGeneration = useRef(0);
   const userId = session?.user.id;
 
   useEffect(() => {
@@ -69,24 +70,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const generation = ++ageCheckGeneration.current;
     try {
       const { data, error } = await supabase.rpc('get_my_age_verification_status');
+      if (generation !== ageCheckGeneration.current) return;
       if (error) throw error;
       if (data === 'verified') setAgeStatus('verified');
       else if (data === 'rejected') setAgeStatus('rejected');
       else setAgeStatus('pending');
     } catch {
       // Fail closed: a network or RPC failure must never unlock the app.
-      setAgeStatus('unavailable');
+      if (generation === ageCheckGeneration.current) setAgeStatus('unavailable');
     }
   }, [userId]);
 
   useEffect(() => {
     if (!userId) {
+      ageCheckGeneration.current += 1;
       setAgeStatus('loading');
       return;
     }
 
+    ageCheckGeneration.current += 1;
     setAgeStatus('loading');
     void refreshAgeStatus();
 
