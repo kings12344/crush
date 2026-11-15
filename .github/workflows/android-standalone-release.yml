@@ -1,0 +1,94 @@
+name: Android standalone release APK
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - "feat/supabase-backend-foundation"
+    paths:
+      - ".github/workflows/android-standalone-release.yml"
+      - "app.json"
+      - "package.json"
+      - "package-lock.json"
+      - "babel.config.js"
+      - "app/**"
+      - "src/**"
+      - "components/**"
+      - "assets/**"
+  push:
+    branches:
+      - "build/android-standalone-release"
+    paths:
+      - ".github/workflows/android-standalone-release.yml"
+      - "app.json"
+      - "package.json"
+      - "package-lock.json"
+      - "babel.config.js"
+      - "app/**"
+      - "src/**"
+      - "components/**"
+      - "assets/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: crush-android-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-android:
+    name: Build standalone Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # These are public client values; never place a Supabase secret/service-role key here.
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: https://dtlbpkcaojctamelogbv.supabase.co
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_p-LB4WlqwWuUTgvqSN11Yw_RpgzZqWm
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Check TypeScript
+        run: npm run typecheck
+
+      - name: Generate Android native project
+        run: npx expo prebuild --platform android --no-install --non-interactive
+        env:
+          EXPO_NO_TELEMETRY: "1"
+
+      - name: Build release APK with embedded JavaScript bundle
+        working-directory: android
+        run: ./gradlew --no-daemon --stacktrace :app:assembleRelease
+
+      - name: Verify APK exists
+        run: test -s android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload standalone APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: crush-android-standalone-release
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
