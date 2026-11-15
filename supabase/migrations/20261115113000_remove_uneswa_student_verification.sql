@@ -30,8 +30,18 @@ begin
   perform private.consume_action_rate_limit('discover', 30, interval '1 minute');
 
   if not exists (
-    select 1 from private.verification_records vr
-    where vr.user_id = v_user and vr.age_status = 'verified'
+    select 1
+    from public.profiles own_profile
+    join private.verification_records own_verification
+      on own_verification.user_id = own_profile.id
+    where own_profile.id = v_user
+      and own_profile.visibility = 'visible'
+      and own_verification.age_status = 'verified'
+      and (
+        (p_mode = 'dating' and own_profile.dating_enabled)
+        or (p_mode = 'friendship' and own_profile.friendship_enabled)
+        or (p_mode = 'both' and (own_profile.dating_enabled or own_profile.friendship_enabled))
+      )
   ) then
     return;
   end if;
@@ -240,6 +250,69 @@ drop policy if exists "messages_select_verified_unblocked_match" on public.messa
 create policy "messages_select_age_verified_unblocked_match"
 on public.messages for select to authenticated
 using (private.is_conversation_available(conversation_id));
+
+create or replace function public.create_post_comment(p_post_id uuid, p_body text)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  v_actor uuid := auth.uid();
+  v_body text := btrim(coalesce(p_body, ''));
+  v_now timestamptz := now();
+  v_count integer;
+  v_comment_id uuid;
+begin
+  if v_actor is null then
+    raise exception using errcode = '28000', message = 'Sign in to comment.';
+  end if;
+  if p_post_id is null or length(v_body) < 1 or length(v_body) > 1000 then
+    raise exception using errcode = '22023', message = 'Comment must be between 1 and 1000 characters.';
+  end if;
+  if not exists (
+    select 1 from private.verification_records v
+    where v.user_id = v_actor
+      and v.age_status = 'verified'
+  ) then
+    raise exception using errcode = '42501', message = 'Complete age verification before commenting.';
+  end if;
+  if not exists (
+    select 1 from public.community_posts p
+    where p.id = p_post_id and p.status = 'published'
+  ) then
+    raise exception using errcode = '22023', message = 'This post is unavailable.';
+  end if;
+  if exists (
+    select 1 from public.blocks b
+    join public.community_posts p on p.id = p_post_id
+    where (b.blocker_id = v_actor and b.blocked_id = p.author_id)
+       or (b.blocker_id = p.author_id and b.blocked_id = v_actor)
+  ) then
+    raise exception using errcode = '42501', message = 'You cannot comment on this post.';
+  end if;
+
+  insert into private.action_rate_limits (user_id, action, window_started_at, request_count)
+  values (v_actor, 'community_comment', v_now, 1)
+  on conflict (user_id, action) do update
+    set window_started_at = case
+          when private.action_rate_limits.window_started_at < v_now - interval '10 minutes' then v_now
+          else private.action_rate_limits.window_started_at end,
+        request_count = case
+          when private.action_rate_limits.window_started_at < v_now - interval '10 minutes' then 1
+          else private.action_rate_limits.request_count + 1 end
+  returning request_count into v_count;
+
+  if v_count > 10 then
+    raise exception using errcode = '42900', message = 'Comment limit reached. Try again in a few minutes.';
+  end if;
+
+  insert into public.community_comments (post_id, author_id, body)
+  values (p_post_id, v_actor, v_body)
+  returning id into v_comment_id;
+  return v_comment_id;
+end;
+$;
 
 comment on function public.discover_profiles(text, integer) is
 'Returns safe profile fields for visible, age-verified accounts. University student verification is not required.';
