@@ -6,6 +6,7 @@ import { Screen } from '../../components/Screen';
 import { Heading } from '../../components/Heading';
 import { demoVideos } from '../../data/demo';
 import { colors } from '../../constants/theme';
+import { MessageCircle } from 'lucide-react-native';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { createPostComment, getPostComments, getPublicFeed, type CommunityComment, type CommunityPost } from '../../lib/community';
 
@@ -92,7 +93,7 @@ export default function Reels() {
         <Text style={s.postBody}>{post.body}</Text>
         <Text style={s.postMeta}>{new Date(post.created_at).toLocaleDateString()} · {post.comment_count} comments</Text>
         <Pressable accessibilityRole="button" onPress={() => openComments(post.post_id)} style={s.commentButton}>
-          <Text style={s.commentText}>{session ? 'View / add comments' : 'Sign in to comment'}</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7 }}><MessageCircle size={16} color={colors.pink} /><Text style={s.commentText}>{session ? 'View / add comments' : 'Sign in to comment'}</Text></View>
         </Pressable>
         {openPost === post.post_id ? <View style={s.commentPanel}>
           {(comments[post.post_id] ?? []).map((comment) => <View key={comment.comment_id} style={s.comment}>
