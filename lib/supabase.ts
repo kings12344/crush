@@ -1,10 +1,12 @@
 import { AppState, Platform } from 'react-native';
+import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
-const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '';
+const runtimeConfig = Constants.expoConfig?.extra ?? {};
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || runtimeConfig.supabaseUrl || '';
+const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || runtimeConfig.supabasePublishableKey || '';
 
 export const isSupabaseConfigured =
   Platform.OS !== 'web' &&
