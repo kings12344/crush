@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { ChevronRight, MessageCircle } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { Screen } from '../../components/Screen';
@@ -33,7 +33,7 @@ export default function Inbox() {
     }
   }, [session]);
 
-  useEffect(() => { void load(); }, [load]);
+  useFocusEffect(useCallback(() => { void load(); }, [load]));
 
   return (
     <Screen>
