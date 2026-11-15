@@ -18,17 +18,17 @@ export default function ResetPassword() {
   useEffect(() => {
     let active = true;
     async function exchange() {
-      if (!code || typeof code !== 'string') {
-        const { data } = await supabase.auth.getSession();
-        if (active && data.session) {
-          setReady(true);
-          setMessage('Choose a new password for your CRUSH account.');
-        } else if (active) {
-          setMessage('This reset link is missing or expired. Return to sign in and request a new one.');
-        }
-        return;
-      }
       try {
+        if (!code || typeof code !== 'string') {
+          const { data } = await supabase.auth.getSession();
+          if (active && data.session) {
+            setReady(true);
+            setMessage('Choose a new password for your CRUSH account.');
+          } else if (active) {
+            setMessage('This reset link is missing or expired. Return to sign in and request a new one.');
+          }
+          return;
+        }
         const { data, error } = await supabase.auth.exchangeCodeForSession(code);
         if (active && !error && data.session) {
           setReady(true);
