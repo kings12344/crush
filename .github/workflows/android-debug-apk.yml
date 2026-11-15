@@ -59,7 +59,20 @@ jobs:
         env:
           CI: '1'
 
-      - name: Build debug APK
+      - name: Configure standalone JavaScript bundle for debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE=android/app/build.gradle
+          if ! grep -q 'debuggableVariants = \["debug"\]' "$FILE"; then
+            echo "Expected Expo Gradle debuggableVariants setting was not found; refusing to produce a Metro-dependent APK."
+            grep -n -A4 -B4 'debuggableVariants' "$FILE" || true
+            exit 1
+          fi
+          sed -i 's/debuggableVariants = \["debug"\]/debuggableVariants = []/' "$FILE"
+          grep -n 'debuggableVariants' "$FILE"
+
+      - name: Build standalone debug APK
         run: ./gradlew --no-daemon --stacktrace :app:assembleDebug
         working-directory: android
 
