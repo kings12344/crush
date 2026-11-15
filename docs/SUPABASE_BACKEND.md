@@ -17,7 +17,7 @@ The mobile client uses the Supabase publishable key only. Never place a secret k
 
 ## Database schema and migrations
 
-The hosted project records 14 migrations:
+The hosted project records 15 migrations:
 
 1. `20261114175834_initial_crush_core`
 2. `20261114175851_realtime_messages_and_indexes`
@@ -33,12 +33,13 @@ The hosted project records 14 migrations:
 12. `20261115113736_secure_match_messaging_and_chat_rpc`
 13. `20261115113749_remove_uneswa_student_verification`
 14. `20261115113758_age_gate_community_reads_and_status_rpc`
+15. `20261115114600_remove_legacy_student_verification_columns`
 
 The live database currently has 12 public application tables. RLS is enabled on all of them. Private verification records and rate-limit state are in the `private` schema; client roles have no direct table grants to those records. The Data API's exposed-schema list still needs dashboard confirmation. The profile-photo bucket is private and limited to JPEG, PNG and WebP files up to 5 MiB. Realtime is enabled for messages.
 
 ### Age-only eligibility
 
-UNESWA student verification has been removed from the app's eligibility checks and from the live discovery, like, Secret Crush, messaging and community-comment authorization functions. The legacy `student_status` field remains in the private verification record only for migration compatibility; no current SECURITY DEFINER function checks it.
+UNESWA student verification has been removed from the app's eligibility checks and from the live discovery, like, Secret Crush, messaging and community-comment authorization functions. The obsolete `student_status` and `student_provider_ref` columns have been removed from the private verification record. No student-verification fields or eligibility checks remain.
 
 Trusted 18+ age assurance remains mandatory:
 
