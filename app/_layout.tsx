@@ -14,7 +14,11 @@ function RootNavigator() {
     const isPendingScreen = root === 'pending';
     const isAuthCallback = root === 'auth';
 
-    if (!session && (root === '(tabs)' || isPendingScreen)) {
+    // Guests may browse the public Reels feed. Account-only areas require sign-in.
+    const tab = segments[1];
+    const isPublicBrowse = root === '(tabs)' && tab === 'reels';
+
+    if (!session && ((root === '(tabs)' && !isPublicBrowse) || isPendingScreen)) {
       router.replace('/(auth)/welcome');
       return;
     }
@@ -22,7 +26,7 @@ function RootNavigator() {
     // Until trusted age + student verification and a server-side eligibility
     // gate exist, signed-in users must not reach prototype tabs via deep links.
     // Keep email confirmation and password-reset callbacks reachable.
-    if (session && !isPendingScreen && !isAuthCallback) {
+    if (session && !isPendingScreen && !isAuthCallback && !isPublicBrowse) {
       router.replace('/pending');
     }
   }, [loading, session?.user.id, segments]);
