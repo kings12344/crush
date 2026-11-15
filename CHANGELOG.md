@@ -2,7 +2,7 @@
 
 ## 2026-11-15 — Production-readiness foundation
 
-- Removed UNESWA student verification from eligibility; trusted 18+ age assurance remains mandatory.
+- Removed UNESWA student verification from eligibility and dropped the obsolete student-verification database columns; trusted 18+ age assurance remains mandatory.
 - Applied live Supabase migrations for private match messaging, age-only eligibility, age-status retrieval and age-gated community reads.
 - Added an authenticated age-status check to app navigation, with foreground refresh and fail-closed behavior.
 - Restricted community feed/comment reads to authenticated, age-verified users.
