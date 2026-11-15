@@ -45,7 +45,14 @@ jobs:
           packages: 'platform-tools'
 
       - name: Install JavaScript dependencies
-        run: npm ci --no-audit --no-fund
+        run: npm install --no-audit --no-fund
+
+      - name: Upload refreshed lockfile for repository sync
+        uses: actions/upload-artifact@v4
+        with:
+          name: crush-package-lock-refresh
+          path: package-lock.json
+          retention-days: 1
 
       - name: Dependency security gate
         run: npm audit --audit-level=high
