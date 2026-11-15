@@ -4,6 +4,7 @@ import { Screen } from '../../components/Screen';
 import { Heading } from '../../components/Heading';
 import { Panel } from '../../components/Panel';
 import { colors } from '../../constants/theme';
+import { Heart, X, Send } from 'lucide-react-native';
 import { assertSupabaseConfigured, supabase } from '../../lib/supabase';
 
 type Mode = 'Dating' | 'Friends';
@@ -180,14 +181,14 @@ export default function Discover() {
             <>
               <View style={s.actions}>
                 <Pressable accessibilityRole="button" disabled={acting !== null} style={s.pass} onPress={() => pass(profile)}>
-                  <Text style={s.passText}>Pass</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><X size={17} color={colors.muted} /><Text style={s.passText}>Pass</Text></View>
                 </Pressable>
                 <Pressable accessibilityRole="button" disabled={acting !== null} style={s.like} onPress={() => void act('Like', profile)}>
-                  {acting === profile.id ? <ActivityIndicator color="white" /> : <Text style={s.likeText}>♡  Like</Text>}
+                  {acting === profile.id ? <ActivityIndicator color="white" /> : <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Heart size={17} color="white" /><Text style={s.likeText}>Like</Text></View>}
                 </Pressable>
               </View>
               <Pressable accessibilityRole="button" disabled={acting !== null} onPress={() => void act('Secret Crush', profile)}>
-                <Text style={s.secret}>Send a Secret Crush 💌</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, paddingTop: 14 }}><Send size={16} color={colors.pink} /><Text style={[s.secret, { paddingTop: 0 }]}>Send a Secret Crush</Text></View>
               </Pressable>
             </>
           ) : (
