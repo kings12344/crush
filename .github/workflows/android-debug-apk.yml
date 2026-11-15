@@ -1,12 +1,6 @@
 name: Android debug APK
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -14,8 +8,6 @@ permissions:
 
 concurrency:
   group: android-debug-apk-${{ github.ref }}
-  # Keep an in-progress APK build alive when another commit is pushed.
-  # New commits queue their own build instead of cancelling the current one.
   cancel-in-progress: false
 
 jobs:
@@ -25,7 +17,7 @@ jobs:
     timeout-minutes: 60
     env:
       EXPO_PUBLIC_SUPABASE_URL: https://dtlbpkcaojctamelogbv.supabase.co
-      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_p-LB4WlqwWuUTgvqSN11Yw_RpgzZqWm
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable-p-LB4WlqwWuUTgvqSN11Yw_RpgzZqWm
 
     steps:
       - name: Check out repository
