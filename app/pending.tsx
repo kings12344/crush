@@ -5,7 +5,7 @@ import { Heading } from '../components/Heading';
 import { Panel } from '../components/Panel';
 import { Screen } from '../components/Screen';
 import { colors } from '../constants/theme';
-import { Heart, Clock3, GraduationCap } from 'lucide-react-native';
+import { Heart, Clock3 } from 'lucide-react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -29,17 +29,14 @@ export default function PendingAccess() {
       <View style={styles.mark}><Heart size={38} color={colors.pink} strokeWidth={2} /></View>
       <Heading eyebrow="ACCOUNT CREATED" title="You're on your way" subtitle={user?.email ?? 'Your account is signed in.'} />
       <Panel>
-        <Text style={styles.heading}>Your account is not eligible for discovery yet.</Text>
-        <Text style={styles.body}>CRUSH is restricted to adults aged 18+ and verified University of Eswatini students. These checks must be completed by trusted services, not by a checkbox or information stored on your phone.</Text>
+        <Text style={styles.heading}>Age assurance is required before discovery opens.</Text>
+        <Text style={styles.body}>CRUSH is intended for adults aged 18 and above. Age must be confirmed by a trusted service, not by a checkbox or information stored only on your phone.</Text>
       </Panel>
       <Panel>
         <View style={styles.statusRow}><Clock3 size={17} color={colors.pink} /><Text style={styles.status}>Age assurance · Pending</Text></View>
         <Text style={styles.body}>No age-verification provider is connected yet.</Text>
-        <View style={styles.divider} />
-        <View style={styles.statusRow}><GraduationCap size={18} color={colors.pink} /><Text style={styles.status}>UNESWA student status · Pending</Text></View>
-        <Text style={styles.body}>The University-approved student verification process is still being arranged.</Text>
       </Panel>
-      <Text style={styles.note}>Your profile has been created as hidden. Discovery, matching and messaging remain unavailable until the required checks and server-side access controls are implemented.</Text>
+      <Text style={styles.note}>Your profile remains hidden. Discovery, matching and messaging stay unavailable until trusted age assurance and the corresponding server-side access controls are implemented. UNESWA student verification is not required.</Text>
       <Pressable accessibilityRole="button" disabled={busy} style={styles.button} onPress={signOut}>
         <Text style={styles.buttonText}>{busy ? 'Signing out…' : 'Sign out'}</Text>
       </Pressable>
@@ -54,7 +51,6 @@ const styles = StyleSheet.create({
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   status: { color: colors.pink, fontWeight: '900' },
   body: { color: colors.muted, fontSize: 13, lineHeight: 20 },
-  divider: { height: 1, backgroundColor: colors.border, marginVertical: 12 },
   note: { color: colors.muted, fontSize: 12, lineHeight: 19 },
   button: { backgroundColor: colors.pink, borderRadius: 14, padding: 16, alignItems: 'center' },
   buttonText: { color: 'white', fontWeight: '900' },

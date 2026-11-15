@@ -23,9 +23,9 @@ function RootNavigator() {
       return;
     }
 
-    // Until trusted age + student verification and a server-side eligibility
-    // gate exist, signed-in users must not reach prototype tabs via deep links.
-    // Keep email confirmation and password-reset callbacks reachable.
+    // Keep the age-assurance gate in place until a trusted provider and
+    // server-side eligibility check are connected. UNESWA student verification
+    // is not part of CRUSH account eligibility.
     if (session && !isPendingScreen && !isAuthCallback && !isPublicBrowse) {
       router.replace('/pending');
     }

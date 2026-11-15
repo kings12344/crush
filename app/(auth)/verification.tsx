@@ -11,38 +11,25 @@ export default function Verification() {
       <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()}>
         <Text style={styles.back}>‹ Back</Text>
       </Pressable>
-      <Heading eyebrow="ELIGIBILITY CHECKS" title="Verification status" subtitle="No verification requests have been submitted from this build." />
+      <Heading eyebrow="ELIGIBILITY CHECK" title="Age assurance" subtitle="Age verification is not connected in this build." />
 
       <Panel>
         <Text style={styles.status}>Age assurance · Not verified</Text>
         <Text style={styles.body}>
-          CRUSH must confirm that an account holder is at least 18 through a trusted provider or approved process. Client-entered dates and checkboxes cannot grant eligibility.
+          CRUSH is intended for adults aged 18 and above. A trusted provider or approved process must confirm age. Client-entered dates and checkboxes cannot grant eligibility.
         </Text>
-        <Text style={styles.pending}>Eligibility stays pending until the server validates an authorized result.</Text>
+        <Text style={styles.pending}>Age-restricted features stay locked until the server validates an authorized result.</Text>
       </Panel>
 
       <Panel>
-        <Text style={styles.status}>UNESWA student status · Not verified</Text>
+        <Text style={styles.title}>Privacy</Text>
         <Text style={styles.body}>
-          A University-approved verification process has not been selected or connected. A university email address alone will not mark an account as a verified student.
-        </Text>
-        <Text style={styles.pending}>No review request is open. No document or email was uploaded or sent.</Text>
-      </Panel>
-
-      <Panel>
-        <Text style={styles.title}>Privacy and access</Text>
-        <Text style={styles.body}>
-          This screen does not collect a date of birth, student email, identity document, or other evidence. When verification is configured, CRUSH should keep only the minimum outcome and reference data, restrict evidence access, and apply an approved retention and deletion policy.
+          This screen does not collect a date of birth, identity document, or other evidence. When age assurance is configured, CRUSH should retain only the minimum outcome and reference data and apply an approved retention and deletion policy.
         </Text>
       </Panel>
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ disabled: true }}
-        disabled
-        style={[styles.disabledButton, styles.button]}
-      >
-        <Text style={styles.disabledText}>Verification unavailable — not submitted</Text>
+      <Pressable accessibilityRole="button" accessibilityState={{ disabled: true }} disabled style={[styles.disabledButton, styles.button]}>
+        <Text style={styles.disabledText}>Age verification unavailable — not submitted</Text>
       </Pressable>
       <Pressable accessibilityRole="button" style={styles.secondary} onPress={() => router.replace('/(auth)/welcome')}>
         <Text style={styles.secondaryText}>Return to welcome</Text>

@@ -10,9 +10,9 @@ export default function Welcome() {
       <View style={styles.logo}><Heart size={48} color={colors.pink} strokeWidth={2.1} /></View>
       <Text style={styles.brand}>CRUSH</Text>
       <Text style={styles.tag}>MEET YOUR PEOPLE. FIND YOUR PERSON.</Text>
-      <Text style={styles.description}>A campus community for real friendships, meaningful connections and moments worth sharing.</Text>
+      <Text style={styles.description}>A community for real friendships, meaningful connections and moments worth sharing.</Text>
       <Text style={styles.notice}>
-        Create an account with a verified email. Age and UNESWA student checks are separate and must be approved before discovery is unlocked.
+        Create an account with a verified email. CRUSH is intended for adults aged 18 and above.
       </Text>
       <Pressable accessibilityRole="button" style={styles.primary} onPress={() => router.push('/(auth)/register')}>
         <Text style={styles.primaryText}>Create account</Text>
@@ -20,7 +20,7 @@ export default function Welcome() {
       <Pressable accessibilityRole="button" style={styles.secondary} onPress={() => router.push('/(auth)/login')}>
         <Text style={styles.secondaryText}>I already have an account</Text>
       </Pressable>
-      <Text style={styles.legal}>CRUSH is intended for adults aged 18 and above. Account creation does not establish age or student eligibility.</Text>
+      <Text style={styles.legal}>Account creation does not establish age. Trusted age assurance is required before age-restricted features are enabled.</Text>
     </Screen>
   );
 }
