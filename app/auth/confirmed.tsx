@@ -19,16 +19,16 @@ export default function EmailConfirmed() {
         setStatus('If you have just confirmed your email, return to CRUSH and sign in. If the link expired, request a new one.');
         return;
       }
-      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-      if (error || !data.user) {
-        if (active) setStatus('This confirmation link may have expired or already been used. Return to sign in and request a fresh link if needed.');
-        return;
-      }
       try {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error || !data.user) {
+          if (active) setStatus('This confirmation link may have expired or already been used. Return to sign in and request a fresh link if needed.');
+          return;
+        }
         await ensureProfile(data.user);
         if (active) router.replace('/pending');
       } catch {
-        if (active) setStatus('Your email is confirmed, but we could not finish setting up your profile. Please sign in again.');
+        if (active) setStatus('We could not complete email confirmation right now. Check your connection and try again, or return to sign in.');
       }
     }
     confirm();
