@@ -7,6 +7,7 @@ import { Screen } from '../../components/Screen';
 import { colors } from '../../constants/theme';
 import { ensureProfile } from '../../lib/auth-profile';
 import { assertSupabaseConfigured, supabase } from '../../lib/supabase';
+import { startGoogleSignIn } from '../../lib/google-auth';
 
 export default function Register() {
   const [displayName, setDisplayName] = useState('');
@@ -51,7 +52,7 @@ export default function Register() {
       });
 
       if (error) {
-        setNotice('We could not create the account. Check the details and try again, or sign in if you already registered.');
+        setNotice(error.message || 'We could not create the account. Please try again.');
         return;
       }
 
@@ -62,9 +63,20 @@ export default function Register() {
       }
 
       setNotice('Your request was received. Check your email for the confirmation link, then return to CRUSH and sign in. If no email arrives, check spam or try again later.');
-    } catch {
-      setNotice('CRUSH could not finish account setup. Check your connection and try again.');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'CRUSH could not finish account setup. Check your connection and try again.');
     } finally {
+      setBusy(false);
+    }
+  };
+
+  const registerWithGoogle = async () => {
+    setNotice('');
+    setBusy(true);
+    try {
+      await startGoogleSignIn();
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Google sign-up is unavailable. Please try again.');
       setBusy(false);
     }
   };
@@ -88,6 +100,9 @@ export default function Register() {
         <Pressable accessibilityRole="button" disabled={busy} style={styles.primary} onPress={register}>
           {busy ? <ActivityIndicator color="white" /> : <Text style={styles.primaryText}>Create account</Text>}
         </Pressable>
+        <Pressable accessibilityRole="button" disabled={busy} style={styles.google} onPress={registerWithGoogle}>
+          <Text style={styles.googleText}>Continue with Google</Text>
+        </Pressable>
       </Panel>
       <Text style={styles.eligibility}>CRUSH is for adults aged 18+ who are eligible University of Eswatini students. Creating an account does not verify either requirement or unlock discovery.</Text>
       <Pressable onPress={() => router.push('/(auth)/login')}><Text style={styles.link}>Already have an account? Sign in</Text></Pressable>
@@ -101,6 +116,8 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderColor: colors.border, backgroundColor: '#FFF8FB', color: colors.black, padding: 14, borderRadius: 12, marginTop: 7, marginBottom: 8 },
   primary: { backgroundColor: colors.pink, padding: 16, borderRadius: 14, alignItems: 'center', marginTop: 12, minHeight: 52, justifyContent: 'center' },
   primaryText: { color: 'white', fontWeight: '900', fontSize: 16 },
+  google: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.border, padding: 15, borderRadius: 14, alignItems: 'center', marginTop: 10, minHeight: 52, justifyContent: 'center' },
+  googleText: { color: colors.black, fontWeight: '900', fontSize: 15 },
   notice: { color: colors.pinkDark, backgroundColor: colors.blush, padding: 11, borderRadius: 10, lineHeight: 18, marginTop: 8 },
   eligibility: { color: colors.muted, fontSize: 11, lineHeight: 17, textAlign: 'center', marginVertical: 12 },
   link: { color: colors.pink, fontWeight: '900', textAlign: 'center', padding: 10 },
