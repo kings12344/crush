@@ -21,9 +21,19 @@ jobs:
     timeout-minutes: 60
     env:
       EXPO_PUBLIC_SUPABASE_URL: https://dtlbpkcaojctamelogbv.supabase.co
-      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable-p-LB4WlqwWuUTgvqSN11Yw_RpgzZqWm
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_p-LB4WlqwWuUTgvqSN11Yw_RpgzZqWm
 
     steps:
+      - name: Validate Supabase public client configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$EXPO_PUBLIC_SUPABASE_URL"
+          case "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" in
+            sb_publishable_*) ;;
+            *) echo "Supabase publishable key must start with sb_publishable_." >&2; exit 1 ;;
+          esac
+
       - name: Check out repository
         uses: actions/checkout@v4
 
