@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-11-15 — Production-readiness foundation
+
+- Removed UNESWA student verification from eligibility; trusted 18+ age assurance remains mandatory.
+- Applied live Supabase migrations for private match messaging, age-only eligibility, age-status retrieval and age-gated community reads.
+- Added an authenticated age-status check to app navigation, with foreground refresh and fail-closed behavior.
+- Restricted community feed/comment reads to authenticated, age-verified users.
+- Added missing community author indexes and tightened block filtering for comments.
+- Updated CI to use `npm ci` and fail on high/critical dependency advisories.
+- Public launch remains blocked on a trusted age-verification provider, production SMTP, physical-device tests, two-account security tests, moderation and account-rights workflows.
+
 ## Unreleased — GitHub Android debug build
 - Added a GitHub Actions workflow to prebuild Android and generate a sideloadable debug APK artifact on pushes to `main` or manual workflow dispatch; it does not publish to a store or use release-signing secrets.
 - Documented how to download and install the 30-day APK artifact and clarified that authentication and verification remain prototype-only.
