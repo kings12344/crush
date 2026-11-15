@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Heart, MessageCircle, RefreshCw } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { Screen } from '../../components/Screen';
@@ -36,9 +36,9 @@ export default function Matches() {
     }
   }, [session]);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     void loadMatches();
-  }, [loadMatches]);
+  }, [loadMatches]));
 
   return (
     <Screen>
