@@ -63,7 +63,7 @@ export default function Register() {
       }
 
       setNotice('Your request was received. Check your email for the confirmation link, then return to CRUSH and sign in. If no email arrives, check spam or try again later.');
-    } catch (error) {
+    } catch {
       setNotice('CRUSH could not finish account setup. Check your connection and try again.');
     } finally {
       setBusy(false);
@@ -76,7 +76,7 @@ export default function Register() {
     try {
       await startGoogleSignIn();
       setBusy(false);
-    } catch (error) {
+    } catch {
       setNotice('Google sign-up is unavailable right now. Please try again later.');
       setBusy(false);
     }
