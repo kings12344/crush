@@ -33,7 +33,7 @@ grant execute on function private.is_conversation_available(uuid) to authenticat
 drop policy if exists "messages_select_participant" on public.messages;
 create policy "messages_select_verified_unblocked_match"
 on public.messages for select to authenticated
-using (public.is_conversation_available(conversation_id));
+using (private.is_conversation_available(conversation_id));
 
 drop policy if exists "messages_insert_active_match" on public.messages;
 revoke insert on public.messages from anon, authenticated;
