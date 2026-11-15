@@ -54,7 +54,7 @@ The database review is catalog/code inspection, not a complete penetration test.
 
 ## Current implementation and known gaps
 
-- The Expo SDK 58 dependency audit previously reported 3 moderate advisories and no high/critical findings. The Android CI workflow now uses `npm ci` and blocks high-or-critical audit findings. Re-run and review the full audit before release; do not use `npm audit fix --force`.
+- The Expo SDK 58 dependency audit previously reported 3 moderate advisories and no high/critical findings. The main-branch Android workflow uses `npm ci`; this PR temporarily uses `npm install` to refresh an out-of-sync lockfile and uploads the refreshed artifact. Commit the synchronized lockfile and restore `npm ci` before merging. CI blocks high-or-critical audit findings. Re-run and review the full audit before release; do not use `npm audit fix --force`.
 - Supabase Auth implements email/password signup, sign-in, email confirmation and password recovery/reset. Redirect URLs still need dashboard allowlisting; a production SMTP sender is not configured.
 - The app checks age status through `get_my_age_verification_status()` after sign-in and on app foreground. Network/RPC errors fail closed. No trusted provider/callback exists yet, so new accounts remain pending.
 - UNESWA student verification has been removed from eligibility logic, and the obsolete `student_status` and `student_provider_ref` columns have been dropped. No student-verification fields remain.
