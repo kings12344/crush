@@ -5,7 +5,7 @@ import { AuthProvider, useAuth } from '../contexts/AuthContext';
 
 function RootNavigator() {
   const { session, loading } = useAuth();
-  const segments = useSegments();
+  const segments = useSegments() as string[];
 
   useEffect(() => {
     if (loading) return;
