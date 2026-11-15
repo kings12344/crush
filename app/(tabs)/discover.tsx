@@ -210,7 +210,7 @@ export default function Discover() {
         </Panel>
       )}
       <Text style={s.note}>Pass currently hides a profile for this session only. Use Report this profile to privately flag safety concerns for review.</Text>
-      <Modal visible={reportTarget !== null} transparent animationType="slide" onRequestClose={() => !submittingReport && setReportTarget(null)}>
+      <Modal visible={reportTarget !== null} transparent animationType="slide" onRequestClose={() => { if (!submittingReport) setReportTarget(null); }}>
         <View style={s.modalBackdrop}>
           <View style={s.modalCard}>
             <ScrollView keyboardShouldPersistTaps="handled">
