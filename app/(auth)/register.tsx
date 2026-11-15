@@ -75,6 +75,7 @@ export default function Register() {
     setBusy(true);
     try {
       await startGoogleSignIn();
+      setBusy(false);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Google sign-up is unavailable. Please try again.');
       setBusy(false);
