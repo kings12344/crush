@@ -48,7 +48,7 @@ export default function Login() {
       await startGoogleSignIn();
       setBusy(false);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : 'Google sign-in is unavailable. Please try again.');
+      setNotice('Google sign-in is unavailable right now. Please try again later.');
       setBusy(false);
     }
   };
@@ -127,7 +127,7 @@ export default function Login() {
           <Text style={styles.link}>Create an account</Text>
         </Pressable>
       </View>
-      <Text style={styles.disclaimer}>Signing in does not bypass CRUSH's 18+ age and UNESWA student eligibility checks.</Text>
+      <Text style={styles.disclaimer}>Signing in does not bypass CRUSH's trusted 18+ age assurance checks.</Text>
     </Screen>
   );
 }
