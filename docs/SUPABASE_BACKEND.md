@@ -34,7 +34,7 @@ The hosted project records 14 migrations:
 13. `20261115113749_remove_uneswa_student_verification`
 14. `20261115113758_age_gate_community_reads_and_status_rpc`
 
-The live database currently has 12 public application tables. RLS is enabled on all of them. Private verification records and rate-limit state are in the non-exposed `private` schema; client roles have no direct table access to those records. The profile-photo bucket is private and limited to JPEG, PNG and WebP files up to 5 MiB. Realtime is enabled for messages.
+The live database currently has 12 public application tables. RLS is enabled on all of them. Private verification records and rate-limit state are in the `private` schema; client roles have no direct table grants to those records. The Data API's exposed-schema list still needs dashboard confirmation. The profile-photo bucket is private and limited to JPEG, PNG and WebP files up to 5 MiB. Realtime is enabled for messages.
 
 ### Age-only eligibility
 
