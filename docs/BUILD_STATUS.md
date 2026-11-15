@@ -5,11 +5,11 @@ Updated 15 November 2026. The active implementation work is on `feat/production-
 ## Implemented and deployed
 
 - Expo Router / React Native / TypeScript application with Supabase Auth and SecureStore-backed native sessions.
-- Supabase project in EU West on the organization's Free plan; 14 database migrations are recorded in the hosted project.
+- Supabase project in EU West on the organization's Free plan; 15 database migrations are recorded in the hosted project.
 - RLS enabled on all 12 public application tables; verification records and rate-limit state remain in the private schema with no client table access.
 - Private profile-photo bucket (JPEG/PNG/WebP, 5 MiB limit).
 - Authenticated discovery, likes, Secret Crush, block/report RPCs, match-only messaging, and Realtime message reads.
-- UNESWA student verification removed from all eligibility checks. Legacy student status remains only for compatibility.
+- UNESWA student verification removed from all eligibility checks; the obsolete student-status and student-provider-reference database columns have also been dropped.
 - Authenticated `get_my_age_verification_status` RPC; app navigation now fails closed and checks status on sign-in and app foreground. Every tab stays locked until trusted 18+ age assurance is verified.
 - Community feed and comment reads now require an authenticated, age-verified account; anonymous execution is revoked.
 - Android debug APK workflow; the latest pre-hardening debug workflow run succeeded on the prior feature commit.
