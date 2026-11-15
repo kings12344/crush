@@ -60,13 +60,16 @@ jobs:
         run: |
           set -euo pipefail
           FILE=android/app/build.gradle
-          if ! grep -q 'debuggableVariants = \["debug"\]' "$FILE"; then
-            echo "Expected Expo Gradle debuggableVariants setting was not found; refusing to produce a Metro-dependent APK."
-            grep -n -A4 -B4 'debuggableVariants' "$FILE" || true
+          if grep -q '^[[:space:]]*debuggableVariants[[:space:]]*=' "$FILE"; then
+            sed -i 's/^[[:space:]]*debuggableVariants[[:space:]]*=.*/    debuggableVariants = []/' "$FILE"
+          elif grep -q '^[[:space:]]*\/\/ debuggableVariants' "$FILE"; then
+            sed -i '/^[[:space:]]*\/\/ debuggableVariants/a\    debuggableVariants = []' "$FILE"
+          else
+            echo "Could not locate Expo Gradle debuggableVariants setting."
             exit 1
           fi
-          sed -i 's/debuggableVariants = \["debug"\]/debuggableVariants = []/' "$FILE"
           grep -n 'debuggableVariants' "$FILE"
+          test "$(grep -c '^[[:space:]]*debuggableVariants[[:space:]]*=' "$FILE")" -eq 1
 
       - name: Build standalone debug APK
         run: ./gradlew --no-daemon --stacktrace :app:assembleDebug
