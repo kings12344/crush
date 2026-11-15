@@ -45,7 +45,7 @@ jobs:
           packages: platform-tools
 
       - name: Install locked dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Check TypeScript
         run: npm run typecheck
