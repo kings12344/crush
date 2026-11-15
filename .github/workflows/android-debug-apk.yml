@@ -45,7 +45,10 @@ jobs:
           packages: 'platform-tools'
 
       - name: Install JavaScript dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
+
+      - name: Dependency security gate
+        run: npm audit --audit-level=high
 
       - name: TypeScript check
         run: npm run typecheck
