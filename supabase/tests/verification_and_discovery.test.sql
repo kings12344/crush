@@ -1,0 +1,130 @@
+-- Run with: supabase test db
+-- These catalog-level checks verify the deployed authorization boundary.
+-- Two-account behavioral tests are still required before enabling production discovery.
+
+begin;
+
+select plan(29);
+
+select has_table('private', 'verification_records',
+  'verification records are stored outside the exposed public schema');
+select has_table('private', 'action_rate_limits',
+  'rate-limit state is stored in the private schema');
+
+select ok((select c.relrowsecurity from pg_class c
+  join pg_namespace n on n.oid = c.relnamespace
+  where n.nspname = 'public' and c.relname = 'profiles'),
+  'profiles has row-level security enabled');
+
+select ok((select c.relrowsecurity from pg_class c
+  join pg_namespace n on n.oid = c.relnamespace
+  where n.nspname = 'private' and c.relname = 'verification_records'),
+  'verification records have row-level security enabled');
+
+select ok((select c.relrowsecurity from pg_class c
+  join pg_namespace n on n.oid = c.relnamespace
+  where n.nspname = 'private' and c.relname = 'action_rate_limits'),
+  'rate-limit state has row-level security enabled');
+
+select ok(not has_function_privilege('anon',
+  'public.discover_profiles(text,integer)', 'EXECUTE'),
+  'anonymous users cannot execute discovery');
+select ok(has_function_privilege('authenticated',
+  'public.discover_profiles(text,integer)', 'EXECUTE'),
+  'signed-in users can execute the guarded discovery RPC');
+
+select ok(not has_function_privilege('anon',
+  'public.send_like(uuid)', 'EXECUTE'),
+  'anonymous users cannot send likes');
+select ok(has_function_privilege('authenticated',
+  'public.send_like(uuid)', 'EXECUTE'),
+  'signed-in users can call the guarded like RPC');
+
+select ok(not has_function_privilege('anon',
+  'public.send_secret_crush(uuid)', 'EXECUTE'),
+  'anonymous users cannot send Secret Crush');
+select ok(has_function_privilege('authenticated',
+  'public.send_secret_crush(uuid)', 'EXECUTE'),
+  'signed-in users can call the guarded Secret Crush RPC');
+
+select ok(not has_function_privilege('authenticated',
+  'private.consume_action_rate_limit(text,integer,interval)', 'EXECUTE'),
+  'clients cannot invoke the private rate-limit helper');
+
+select ok(not has_function_privilege('authenticated',
+  'private.initialize_verification_record()', 'EXECUTE'),
+  'clients cannot invoke the Auth verification trigger function');
+
+select ok((
+  select count(*) = 2
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'private'
+    and p.proname = any (array[
+      'consume_action_rate_limit', 'initialize_verification_record'
+    ])
+    and p.prosecdef
+    and coalesce(p.proconfig, array[]::text[]) @> array['search_path=""']
+) and not has_function_privilege('anon',
+  'private.consume_action_rate_limit(text,integer,interval)', 'EXECUTE')
+  and not has_function_privilege('anon',
+  'private.initialize_verification_record()', 'EXECUTE'),
+  'private SECURITY DEFINER helpers pin an empty search_path and deny anon execution');
+
+select has_trigger('auth', 'users',
+  'on_auth_user_created_verification_record',
+  'new Auth users receive a pending verification record');
+
+select ok(not exists (
+  select 1 from pg_policies
+  where schemaname = 'private'
+    and tablename = 'action_rate_limits'
+), 'rate-limit table has no client policies (intentional default deny)');
+
+select ok(
+  not has_table_privilege('anon', 'private.action_rate_limits', 'SELECT')
+  and not has_table_privilege('authenticated', 'private.action_rate_limits', 'SELECT'),
+  'anonymous and signed-in clients cannot read private rate-limit state');
+
+select ok((
+  select count(*) = 7
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public'
+    and p.proname = any (array[
+      'block_user', 'discover_profiles', 'get_blocked_users',
+      'send_like', 'send_secret_crush', 'submit_report', 'unblock_user'
+    ])
+    and p.prosecdef
+    and coalesce(p.proconfig, array[]::text[]) @> array['search_path=""']
+), 'all seven exposed SECURITY DEFINER RPCs pin an empty search_path');
+
+select ok(not has_table_privilege('authenticated',
+  'public.reports', 'INSERT'),
+  'signed-in users cannot insert reports directly or forge moderation status');
+select ok(not has_function_privilege('anon',
+  'public.submit_report(uuid,text,text)', 'EXECUTE'),
+  'anonymous users cannot submit reports');
+select ok(has_function_privilege('authenticated',
+  'public.submit_report(uuid,text,text)', 'EXECUTE'),
+  'signed-in users can submit reports through the validated RPC');
+
+select ok(not has_table_privilege('authenticated', 'public.blocks', 'INSERT'),
+  'clients cannot forge block ownership through direct INSERT');
+select ok(not has_table_privilege('authenticated', 'public.blocks', 'DELETE'),
+  'clients cannot bypass unblock validation through direct DELETE');
+select ok(not has_function_privilege('anon', 'public.block_user(uuid)', 'EXECUTE'),
+  'anonymous users cannot block accounts');
+select ok(has_function_privilege('authenticated', 'public.block_user(uuid)', 'EXECUTE'),
+  'signed-in users can block through the actor-bound RPC');
+select ok(not has_function_privilege('anon', 'public.unblock_user(uuid)', 'EXECUTE'),
+  'anonymous users cannot unblock accounts');
+select ok(has_function_privilege('authenticated', 'public.unblock_user(uuid)', 'EXECUTE'),
+  'signed-in users can unblock through the actor-bound RPC');
+select ok(not has_function_privilege('anon', 'public.get_blocked_users()', 'EXECUTE'),
+  'anonymous users cannot list blocked accounts');
+select ok(has_function_privilege('authenticated', 'public.get_blocked_users()', 'EXECUTE'),
+  'signed-in users can retrieve their own blocked-account list');
+
+select * from finish();
+rollback;
