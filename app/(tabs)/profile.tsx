@@ -5,6 +5,7 @@ import { Screen } from '../../components/Screen';
 import { Heading } from '../../components/Heading';
 import { Panel } from '../../components/Panel';
 import { colors } from '../../constants/theme';
+import { ShieldCheck, ChevronRight, UserRound } from 'lucide-react-native';
 import {
   DEFAULT_PRIVACY_PREVIEW_PREFERENCES,
   loadPrivacyPreviewPreferences,
@@ -77,7 +78,7 @@ export default function Profile() {
     <Screen>
       <Heading eyebrow="YOUR SPACE" title="Profile" subtitle="Your CRUSH identity, your rules." />
       <Panel>
-        <View style={styles.avatar}><Text style={{ fontSize: 42 }}>🌷</Text></View>
+        <View style={styles.avatar}><UserRound size={38} color={colors.pink} strokeWidth={1.7} /></View>
         <Text style={styles.name}>Your profile</Text>
         <Text style={styles.muted}>Set up your display name, photos, interests and campus details when account creation is implemented.</Text>
       </Panel>
@@ -92,11 +93,11 @@ export default function Profile() {
       </Panel>
 
       <Pressable accessibilityRole="button" onPress={() => router.push('/safety')}>
-        <Panel><Text style={styles.item}>Safety center  ›</Text><Text style={styles.sub}>Blocking, reporting, privacy and safer-meetup guidance.</Text></Panel>
+        <Panel><View style={styles.menuRow}><ShieldCheck size={19} color={colors.pink} /><View style={{ flex: 1 }}><Text style={styles.item}>Safety center</Text><Text style={styles.sub}>Blocking, reporting, privacy and safer-meetup guidance.</Text></View><ChevronRight size={18} color={colors.muted} /></View></Panel>
       </Pressable>
       {['Edit profile', 'Verification status', 'Notifications', 'Help and support', 'Account settings'].map((item) => (
         <Pressable key={item} onPress={() => Alert.alert(item, 'This feature will be connected after secure account services are implemented.')}>
-          <Panel><Text style={styles.item}>{item}  ›</Text></Panel>
+          <Panel><View style={styles.menuRow}><Text style={[styles.item,{flex:1}]}>{item}</Text><ChevronRight size={18} color={colors.muted} /></View></Panel>
         </Pressable>
       ))}
       <Pressable onPress={() => Alert.alert('Account deletion', 'Account deletion will be available once backend accounts exist. Production must provide deletion and data-export controls.')}>
@@ -107,6 +108,7 @@ export default function Profile() {
 }
 
 const styles = StyleSheet.create({
+  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: { width: 92, height: 92, borderRadius: 46, backgroundColor: '#FFF0F6', alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
   name: { fontSize: 20, fontWeight: '900', textAlign: 'center', color: colors.black },
   muted: { color: colors.muted, textAlign: 'center', lineHeight: 21 },
