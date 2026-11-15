@@ -16,7 +16,7 @@ Updated 15 November 2026. CRUSH is an adults-only social-discovery application. 
 - Supabase-backed private match messaging with guarded reads, actor-bound send RPC, rate limits and Realtime updates.
 - Age-gated community feed/comment reads and comment submission; anonymous execution revoked and underlying tables default-deny.
 - Authenticated `get_my_age_verification_status()` RPC. The app checks it on sign-in and app foreground, fails closed on errors, and keeps all tabs locked until the server returns `verified`.
-- UNESWA student verification removed from onboarding and all eligibility logic. Legacy database status retained only for compatibility.
+- UNESWA student verification removed from onboarding and all eligibility logic. Obsolete student-status and student-provider-reference columns have also been removed from the database.
 - Android GitHub Actions debug APK workflow.
 
 ### Still required for Stage 1 completion
@@ -46,7 +46,7 @@ Resolve dependency audit findings through compatible upstream updates; do not us
 ## Current verified baseline — 15 November 2026
 
 - Supabase CRUSH project is ACTIVE_HEALTHY in EU West, on the organization's Free plan.
-- Hosted migration history contains 14 entries, including the messaging RPCs, age-only eligibility migration and age-gated community-read/status RPC migration.
+- Hosted migration history contains 15 entries, including messaging RPCs, age-only eligibility, age-gated community reads/status and removal of obsolete student-verification columns.
 - Read-only SQL checks confirm all inspected SECURITY DEFINER functions use an empty search_path, none are executable by anon, private verification data has no client SELECT grants, and no current SECURITY DEFINER function references `student_status`.
 - The photo bucket is private with a 5 MiB image limit.
 - Security Advisor reports three intentional default-deny RLS/no-policy INFO findings and 13 authenticated SECURITY DEFINER warnings; Performance Advisor reports 12 unused-index INFO findings. Preserve the current least-privilege design and review these functions when they change.
