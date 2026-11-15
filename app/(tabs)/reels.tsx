@@ -12,6 +12,7 @@ export default function Reels() {
   <Heading eyebrow="CRUSH SOCIAL" title="Reels" subtitle="Short videos from your campus community."/>
   {demoVideos.map(v=><View key={v.id} style={s.video}>
    <Text style={{fontSize:64}}>{v.emoji}</Text><Text style={s.creator}>{v.creator}</Text><Text style={s.caption}>{v.caption}</Text><Text style={s.category}>{v.category} · Demo preview</Text>
+   <Pressable accessibilityRole="button" onPress={requireSignIn} style={s.commentButton}><Text style={s.commentText}>{session ? "Comments are coming soon" : "Sign in to comment"}</Text></Pressable>
   </View>)}
   {!session ? <View style={s.guestBox}><Text style={s.guestTitle}>Enjoying CRUSH?</Text><Text style={s.note}>Create an account or sign in when you are ready to comment and access member features.</Text><Pressable accessibilityRole="button" style={s.joinButton} onPress={() => router.push('/(auth)/register')}><Text style={s.joinText}>Create account</Text></Pressable><Pressable accessibilityRole="button" onPress={() => router.push('/(auth)/login')}><Text style={s.loginText}>Already a member? Sign in</Text></Pressable></View> : null}
   <Text style={s.note}>This is a public demo feed. Real community uploads, comments and moderation are still being built.</Text>
