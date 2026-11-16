@@ -84,4 +84,4 @@ Both trusted integrations are still missing. All new accounts must remain hidden
 
 ## Local database test execution — 17 November 2026
 
-A repository workflow now initializes a disposable local Supabase stack and runs `supabase test db` without hosted-project credentials. The 58-assertion suite has not yet passed: earlier runs exposed two formatting-sensitive block-filter assertions and one stale conversation-helper assertion after refactoring. Those expectations were corrected and the latest run is pending. The migrations themselves applied successfully in the earlier local runs. No hosted migration was applied.
+A repository workflow now initializes a disposable local Supabase stack and runs `supabase test db` without hosted-project credentials. The 58-assertion suite passed in run 43974165522 (58 tests, zero failures); the disposable stack applied all migrations successfully. Earlier runs exposed two formatting-sensitive block-filter assertions and one stale conversation-helper assertion after refactoring; those expectations were corrected. A rerun for the latest documentation-only branch head is in progress. No hosted migration was applied.
