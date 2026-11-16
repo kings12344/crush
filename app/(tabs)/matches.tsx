@@ -26,8 +26,8 @@ export default function Matches() {
     setLoading(true);
     setError('');
     try {
-      // This RPC returns only the caller's active, age-verified,
-      // mutual-match conversations that remain available under block rules.
+      // This RPC returns only active mutual-match conversations where both
+      // participants remain age-verified, current UNESWA students and unblocked.
       setItems(await getMyConversations());
     } catch {
       setError('Your matches could not be loaded. Check your connection and try again.');
