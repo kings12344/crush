@@ -188,8 +188,18 @@ begin
   then raise exception using errcode='42501',message='Complete age and UNESWA student verification first.'; end if;
   return query
   select p.id,coalesce(nullif(btrim(pr.display_name),''),'CRUSH member'),p.body,p.created_at,
-    (select count(*) from public.community_comments c where c.post_id=p.id and c.status='visible'
-      and not exists(select 1 from public.blocks b where (b.blocker_id=v_actor and b.blocked_id=c.author_id) or (b.blocked_id=v_actor and b.blocker_id=c.author_id)))
+    (
+      select count(*)
+      from public.community_comments c
+      where c.post_id = p.id
+        and c.status = 'visible'
+        and not exists (
+          select 1
+          from public.blocks b
+          where (b.blocker_id = v_actor and b.blocked_id = c.author_id)
+             or (b.blocked_id = v_actor and b.blocker_id = c.author_id)
+        )
+    )
   from public.community_posts p left join public.profiles pr on pr.id=p.author_id
   where p.status='published' and (p_before is null or p.created_at<p_before)
     and not exists (
