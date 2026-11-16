@@ -111,22 +111,71 @@ $$;
 revoke all on function public.send_secret_crush(uuid) from public,anon;
 grant execute on function public.send_secret_crush(uuid) to authenticated;
 
-create or replace function private.is_conversation_available(p_conversation_id uuid)
-returns boolean language sql stable security definer set search_path = ''
+create or replace function private.is_match_available(p_match_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
 as $$
-  select auth.uid() is not null and exists(
-    select 1 from public.conversations c join public.matches m on m.id=c.match_id
-    join private.verification_records own_v on own_v.user_id=auth.uid()
-    join private.verification_records peer_v on peer_v.user_id=case when m.user_low=auth.uid() then m.user_high else m.user_low end
-    where c.id=p_conversation_id and (m.user_low=auth.uid() or m.user_high=auth.uid())
-      and own_v.age_status='verified' and own_v.student_status='verified'
-      and peer_v.age_status='verified' and peer_v.student_status='verified'
-      and not exists(select 1 from public.blocks b where (b.blocker_id=m.user_low and b.blocked_id=m.user_high) or (b.blocker_id=m.user_high and b.blocked_id=m.user_low))
+  select auth.uid() is not null and exists (
+    select 1
+    from public.matches m
+    join private.verification_records own_v
+      on own_v.user_id = auth.uid()
+    join private.verification_records peer_v
+      on peer_v.user_id = case
+        when m.user_low = auth.uid() then m.user_high
+        else m.user_low
+      end
+    where m.id = p_match_id
+      and (m.user_low = auth.uid() or m.user_high = auth.uid())
+      and own_v.age_status = 'verified'
+      and own_v.student_status = 'verified'
+      and peer_v.age_status = 'verified'
+      and peer_v.student_status = 'verified'
+      and not exists (
+        select 1
+        from public.blocks b
+        where (b.blocker_id = m.user_low and b.blocked_id = m.user_high)
+           or (b.blocker_id = m.user_high and b.blocked_id = m.user_low)
+      )
   );
 $$;
-revoke all on function private.is_conversation_available(uuid) from public,anon,authenticated;
+revoke all on function private.is_match_available(uuid) from public, anon, authenticated;
 grant usage on schema private to authenticated;
+grant execute on function private.is_match_available(uuid) to authenticated;
+
+create or replace function private.is_conversation_available(p_conversation_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select auth.uid() is not null and exists (
+    select 1
+    from public.conversations c
+    where c.id = p_conversation_id
+      and private.is_match_available(c.match_id)
+  );
+$$;
+revoke all on function private.is_conversation_available(uuid) from public, anon, authenticated;
 grant execute on function private.is_conversation_available(uuid) to authenticated;
+
+-- Direct table reads must not bypass the same eligibility and block checks
+-- used by the guarded messaging RPCs.
+drop policy if exists matches_select_participant on public.matches;
+drop policy if exists matches_select_verified_unblocked_participant on public.matches;
+create policy matches_select_verified_unblocked_participant
+on public.matches for select to authenticated
+using (private.is_match_available(id));
+
+drop policy if exists conversations_select_participant on public.conversations;
+drop policy if exists conversations_select_verified_unblocked_participant on public.conversations;
+create policy conversations_select_verified_unblocked_participant
+on public.conversations for select to authenticated
+using (private.is_conversation_available(id));
 
 create or replace function public.get_public_feed(p_limit integer default 20,p_before timestamptz default null)
 returns table(post_id uuid,author_name text,body text,created_at timestamptz,comment_count bigint)
@@ -143,7 +192,12 @@ begin
       and not exists(select 1 from public.blocks b where (b.blocker_id=v_actor and b.blocked_id=c.author_id) or (b.blocked_id=v_actor and b.blocker_id=c.author_id)))
   from public.community_posts p left join public.profiles pr on pr.id=p.author_id
   where p.status='published' and (p_before is null or p.created_at<p_before)
-    and not exists(select 1 from public.blocks b where (b.blocker_id=v_actor and b.blocked_id=p.author_id) or (b.blocked_id=v_actor and b.blocker_id=p.author_id))
+    and not exists (
+      select 1
+      from public.blocks b
+      where (b.blocker_id = v_actor and b.blocked_id = p.author_id)
+         or (b.blocked_id = v_actor and b.blocker_id = p.author_id)
+    )
   order by p.created_at desc,p.id desc limit least(greatest(coalesce(p_limit,20),1),30);
 end;
 $$;
@@ -200,6 +254,7 @@ grant execute on function public.create_post_comment(uuid,text) to authenticated
 comment on function public.discover_profiles(text,integer) is 'Returns safe profiles only when caller and candidate have verified age and current UNESWA student status.';
 comment on function public.send_like(uuid) is 'Creates likes and matches only for age-verified current UNESWA students who are visible, opted in and unblocked.';
 comment on function public.send_secret_crush(uuid) is 'Creates Secret Crush interactions only for age-verified current UNESWA students who are visible, opted in and unblocked.';
+comment on function private.is_match_available(uuid) is 'Allows match reads only for participants who remain age-verified, current UNESWA students and unblocked.';
 comment on function private.is_conversation_available(uuid) is 'Allows messages only for mutual-match participants who remain age-verified, current UNESWA students and unblocked.';
 comment on function public.get_public_feed(integer,timestamptz) is 'Returns community posts only to authenticated age-verified current UNESWA students and excludes blocked authors and comments.';
 comment on function public.get_my_conversations() is 'Lists mutual-match conversations only when both participants remain age-verified, current UNESWA students and unblocked.';
