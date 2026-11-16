@@ -45,15 +45,17 @@ Scope: repository source and workflow review, Supabase schema/catalog inspection
 | CR-009 | Info | Supabase Advisor reports 13 authenticated SECURITY DEFINER RPC warnings. Catalog inspection found empty `search_path` on the inspected functions and no anon EXECUTE grants. | Keep every function explicitly actor-bound and fully qualified; add authorization tests whenever an RPC changes. | Reviewed at catalog level; behavioral coverage incomplete |
 | CR-010 | Info | Supabase Performance Advisor reports 12 unused indexes on a new, near-zero-traffic project. | Do not drop them without representative query plans and workload evidence. | Monitored |
 | CR-012 | Medium | Registration passed raw Supabase Auth errors to the user, which could reveal account existence or internal failure details; Google OAuth screens also surfaced raw provider errors. | Replaced registration and OAuth error details with generic user-facing messages; aligned registration/login copy with 18+ and UNESWA student eligibility. | Committed to PR branch; CI pending |
+| CR-013 | Medium | Hosted RLS policies on `matches` and `conversations` allowed participant SELECT without checking that both participants remained verified or unblocked. Message reads were guarded, but relationship metadata could still be queried after eligibility loss or a block. | PR #8 adds `private.is_match_available`, makes the conversation guard delegate to it, and replaces both SELECT policies. The helper is actor-bound, SECURITY DEFINER with an empty search path, and checks age, current UNESWA student status and both block directions. Added pgTAP catalog assertions for the helper and policies. | Committed to PR #8; local database CI pending; hosted database unchanged |
 
-## Verified controls observed on 16 November 2026
+## Verified controls observed in the hosted project on 17 November 2026
 
 - All 12 public application tables have RLS enabled.
-- Private verification and rate-limit tables have no direct client table access.
+- Private verification and rate-limit tables have no direct client table access; the verification table has an explicit deny policy for anon/authenticated.
 - Community post/comment tables have no anon or authenticated direct SELECT grants; RPCs are the access path.
-- Message direct SELECT is granted only to authenticated users and is further constrained by an RLS policy calling the private conversation guard; anon has no SELECT grant.
-- The updated private conversation guard checks caller membership, both users' age and UNESWA student-verification status, and both directions of blocks.
-- Inspected SECURITY DEFINER functions pin an empty `search_path`; none of the inspected functions is executable by anon.
+- Message direct SELECT is granted only to authenticated users and is constrained by the private conversation guard; anon has no SELECT grant.
+- The hosted project is still on the age-only schema. Its current match and conversation SELECT policies are participant-only and do not yet enforce current verification or block status. This is recorded as CR-013; do not treat the PR #8 fix as live.
+- On the PR #8 branch, `private.is_match_available` checks both participants' age and current UNESWA student status plus both block directions; the conversation helper delegates to it. New RLS policies use those helpers for matches and conversations. These branch changes are not applied to the hosted database.
+- Inspected SECURITY DEFINER functions pin an empty `search_path`; the new PR #8 helpers deny anon EXECUTE and grant only authenticated EXECUTE.
 - The `profile-photos` bucket is private, has a 5 MiB limit and permits JPEG, PNG and WebP. Storage object policies scope operations to the authenticated user's folder.
 - Targeted GitHub searches for `SUPABASE_SERVICE_ROLE_KEY` and `service_role` returned no matches. This is a targeted search, not a complete historical secret scan.
 - The current npm audit reports three moderate findings associated with the same minimatch advisory in Expo build tooling; this is not three separate advisories. Expo maintainers have assessed the affected use as not exploitable through app inputs.
@@ -62,7 +64,7 @@ Scope: repository source and workflow review, Supabase schema/catalog inspection
 
 - [ ] Confirm GitHub repository visibility is intentional.
 - [ ] Commit the refreshed package lockfile and restore deterministic `npm ci`.
-- [ ] Run the expanded pgTAP suite, including student-eligibility assertions, in a local/test database.
+- [ ] Run the expanded 57-assertion pgTAP suite, including student-eligibility and match/conversation RLS assertions, in a local/test database.
 - [ ] Run two-account tests for discovery, likes, Secret Crush, conversations, messages, comments and blocks.
 - [ ] Integrate trusted age assurance and University-approved student verification with signed server callbacks.
 - [ ] Verify Auth redirect allowlist and production SMTP.
@@ -75,6 +77,6 @@ This is a focused engineering review, not a full penetration test or production 
 
 ## Eligibility correction — 17 November 2026
 
-The product audience is confirmed as current UNESWA students aged 18+. The production-readiness branch had removed student eligibility from the app and live database. A follow-up branch restores private `student_status` and `student_provider_ref` columns, adds an authenticated own-status RPC, and re-enforces both statuses in discovery, matching, messaging and community operations. The migration is additive and remains unapplied to the hosted database pending test review and production approval.
+The product audience is confirmed as current UNESWA students aged 18+. The production-readiness branch had removed student eligibility from the app and live database. A follow-up branch restores private `student_status` and `student_provider_ref` columns, adds an authenticated own-status RPC, and re-enforces both statuses in discovery, matching, messaging and community operations. The migration is additive and remains unapplied to the hosted database pending test review and production approval. PR #8 also closes CR-013 on its branch by gating match/conversation metadata reads.
 
 Both trusted integrations are still missing. All new accounts must remain hidden and pending. Do not use an email-domain check, student-number form, checkbox or manual client flag as a substitute for institutional verification.
