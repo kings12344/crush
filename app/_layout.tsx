@@ -4,48 +4,36 @@ import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 
 function RootNavigator() {
-  const { session, loading, ageStatus } = useAuth();
+  const { session, loading, ageStatus, studentStatus } = useAuth();
   const segments = useSegments() as string[];
 
   useEffect(() => {
     if (loading) return;
-
     const root = segments[0];
     const isPendingScreen = root === 'pending';
     const isAuthCallback = root === 'auth';
     const isAuthArea = root === '(auth)' || isAuthCallback;
+    const eligible = ageStatus === 'verified' && studentStatus === 'verified';
 
-    // CRUSH is an adults-only app. No tab, including Reels, is available
-    // until a trusted server-side age-verification result is confirmed.
+    // Every tab stays locked until trusted 18+ and current UNESWA student
+    // verification are both confirmed by authenticated server RPCs.
     if (!session && (root === '(tabs)' || isPendingScreen)) {
       router.replace('/(auth)/welcome');
       return;
     }
-
-    // Verification status is read from the private Supabase record through
-    // an authenticated RPC. Failures and unknown states remain locked.
-    if (session && ageStatus !== 'verified' && !isPendingScreen && !isAuthCallback) {
+    // Pending, rejected, unknown and unavailable statuses fail closed.
+    if (session && !eligible && !isPendingScreen && !isAuthCallback) {
       router.replace('/pending');
       return;
     }
-
-    if (session && ageStatus === 'verified' && (isPendingScreen || isAuthArea)) {
+    if (session && eligible && (isPendingScreen || isAuthArea)) {
       router.replace('/(tabs)/discover');
     }
-  }, [loading, session?.user.id, ageStatus, segments]);
+  }, [loading, session?.user.id, ageStatus, studentStatus, segments]);
 
-  return (
-    <>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false }} />
-    </>
-  );
+  return <><StatusBar style="dark" /><Stack screenOptions={{ headerShown: false }} /></>;
 }
 
 export default function RootLayout() {
-  return (
-    <AuthProvider>
-      <RootNavigator />
-    </AuthProvider>
-  );
+  return <AuthProvider><RootNavigator /></AuthProvider>;
 }

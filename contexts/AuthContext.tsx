@@ -3,14 +3,15 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { Session, User } from '@supabase/supabase-js';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
-export type AgeVerificationStatus = 'loading' | 'pending' | 'verified' | 'rejected' | 'unavailable';
+export type EligibilityStatus = 'loading' | 'pending' | 'verified' | 'rejected' | 'needs_review' | 'unavailable';
 
 type AuthContextValue = {
   session: Session | null;
   user: User | null;
   loading: boolean;
-  ageStatus: AgeVerificationStatus;
-  refreshAgeStatus: () => Promise<void>;
+  ageStatus: EligibilityStatus;
+  studentStatus: EligibilityStatus;
+  refreshEligibilityStatus: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue>({
@@ -18,14 +19,21 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   loading: true,
   ageStatus: 'loading',
-  refreshAgeStatus: async () => {},
+  studentStatus: 'loading',
+  refreshEligibilityStatus: async () => {},
 });
+
+function normalizeStatus(value: unknown): EligibilityStatus {
+  if (value === 'verified' || value === 'rejected' || value === 'needs_review') return value;
+  return 'pending';
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [ageStatus, setAgeStatus] = useState<AgeVerificationStatus>('loading');
-  const ageCheckGeneration = useRef(0);
+  const [ageStatus, setAgeStatus] = useState<EligibilityStatus>('loading');
+  const [studentStatus, setStudentStatus] = useState<EligibilityStatus>('loading');
+  const checkGeneration = useRef(0);
   const userId = session?.user.id;
 
   useEffect(() => {
@@ -33,19 +41,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       return;
     }
-
     let mounted = true;
     let receivedAuthEvent = false;
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!mounted) return;
-      // Auth events are authoritative. Do not let the initial getSession()
-      // promise overwrite a newer sign-in, sign-out, or token-refresh event.
       receivedAuthEvent = true;
       setSession(nextSession);
       setLoading(false);
     });
-
     supabase.auth.getSession().then(({ data, error }) => {
       if (!mounted || receivedAuthEvent) return;
       if (error) setSession(null);
@@ -57,58 +60,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       }
     });
-
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
-  const refreshAgeStatus = useCallback(async () => {
+  const refreshEligibilityStatus = useCallback(async () => {
     if (!userId || !isSupabaseConfigured) {
       setAgeStatus('loading');
+      setStudentStatus('loading');
       return;
     }
-
-    const generation = ++ageCheckGeneration.current;
+    const generation = ++checkGeneration.current;
     try {
-      const { data, error } = await supabase.rpc('get_my_age_verification_status');
-      if (generation !== ageCheckGeneration.current) return;
-      if (error) throw error;
-      if (data === 'verified') setAgeStatus('verified');
-      else if (data === 'rejected') setAgeStatus('rejected');
-      else setAgeStatus('pending');
+      const [ageResult, studentResult] = await Promise.all([
+        supabase.rpc('get_my_age_verification_status'),
+        supabase.rpc('get_my_student_verification_status'),
+      ]);
+      if (generation !== checkGeneration.current) return;
+      if (ageResult.error) throw ageResult.error;
+      if (studentResult.error) throw studentResult.error;
+      setAgeStatus(normalizeStatus(ageResult.data));
+      setStudentStatus(normalizeStatus(studentResult.data));
     } catch {
-      // Fail closed: a network or RPC failure must never unlock the app.
-      if (generation === ageCheckGeneration.current) setAgeStatus('unavailable');
+      // Either failed check keeps the entire app locked.
+      if (generation === checkGeneration.current) {
+        setAgeStatus('unavailable');
+        setStudentStatus('unavailable');
+      }
     }
   }, [userId]);
 
   useEffect(() => {
     if (!userId) {
-      ageCheckGeneration.current += 1;
+      checkGeneration.current += 1;
       setAgeStatus('loading');
+      setStudentStatus('loading');
       return;
     }
-
-    ageCheckGeneration.current += 1;
+    checkGeneration.current += 1;
     setAgeStatus('loading');
-    void refreshAgeStatus();
-
+    setStudentStatus('loading');
+    void refreshEligibilityStatus();
     const appStateSubscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') void refreshAgeStatus();
+      if (state === 'active') void refreshEligibilityStatus();
     });
-
     return () => appStateSubscription.remove();
-  }, [userId, refreshAgeStatus]);
+  }, [userId, refreshEligibilityStatus]);
 
   const value = useMemo(() => ({
-    session,
-    user: session?.user ?? null,
-    loading,
-    ageStatus,
-    refreshAgeStatus,
-  }), [session, loading, ageStatus, refreshAgeStatus]);
+    session, user: session?.user ?? null, loading, ageStatus, studentStatus, refreshEligibilityStatus,
+  }), [session, loading, ageStatus, studentStatus, refreshEligibilityStatus]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

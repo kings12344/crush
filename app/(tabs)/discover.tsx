@@ -44,7 +44,7 @@ export default function Discover() {
       setDismissed([]);
     } catch {
       setProfiles([]);
-      setError('CRUSH could not load verified campus profiles. Check your connection and backend configuration, then try again.');
+      setError('CRUSH could not load eligible UNESWA student profiles. Check your connection and backend configuration, then try again.');
     } finally {
       setLoading(false);
     }
@@ -84,7 +84,7 @@ export default function Discover() {
     } catch {
       Alert.alert(
         'Action unavailable',
-        'CRUSH could not process this action. Your account may still be awaiting trusted age verification, or the service may be temporarily unavailable.',
+        'CRUSH could not process this action. Your account may still be awaiting trusted age or UNESWA student verification, or the service may be temporarily unavailable.',
       );
     } finally {
       setActing(null);

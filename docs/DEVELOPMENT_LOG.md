@@ -43,3 +43,35 @@
 3. Run controlled two-account tests for age gating, discovery, mutual matching, messaging, comments and both directions of blocks.
 4. Complete account deletion/export, moderation and retention workflows.
 5. Confirm repository visibility and the intended product audience before PR #7 is merged.
+
+
+## Session 3 — 17 November 2026
+
+### Product Engineer
+- Confirmed the app-level route guard requires both trusted 18+ age verification and current UNESWA student verification before opening any tab.
+- Updated Reels and Matches wording so the visible product copy describes verified UNESWA students rather than generic public campus content.
+- Kept the pending screen fail-closed: neither a student email nor a client-side checkbox can unlock the app.
+
+### Cybersecurity Engineer
+- Added CR-014 after finding that community reads checked the viewer but did not consistently filter post/comment authors whose eligibility had become pending or revoked.
+- Updated the PR #8 migration so feed posts, comment lists and comment counts exclude ineligible authors, and comment creation rejects posts by ineligible authors.
+- Added four catalog assertions and a nine-assertion synthetic behavioral test covering pending-to-verified author transitions. Test data is rolled back; no hosted user data was accessed or changed.
+- Kept CR-013's match/conversation metadata protections in the PR branch; no production migration was applied.
+
+### Verification
+- Prior 58-assertion catalog suite passed on head 0a6cfd8 (run 43974798355).
+- Expanded 62 catalog + 9 behavioral pgTAP suite is pending on current head 83d32fb (run 43978158726).
+- Android debug APK build is pending on the app/migration head (run 43978039919).
+- No trusted age-assurance provider or University-approved student callback is connected. All new accounts remain pending.
+
+### Outstanding
+- Wait for the expanded local Supabase suite and Android build; fix any failures without weakening checks.
+- Add two-account behavioral tests for discovery, likes, Secret Crush, conversation reads, message sends and both-direction blocks.
+- Integrate approved age and current-student verification providers with signed server callbacks.
+- Synchronize the dependency lockfile and complete device, moderation, account-rights and operational readiness work.
+
+
+### QA follow-up — 17 November 2026
+- The first expanded local Supabase run (43978158726) passed all 9 synthetic community-author behavioral assertions and 60/62 catalog assertions. Two older block-filter checks were formatting-sensitive, not runtime authorization failures.
+- Updated those catalog checks to normalize whitespace before matching SQL definitions.
+- Corrected database rerun 43978692785 passed **71/71 tests** (62 catalog + 9 synthetic behavioral) on head bcbdf95. Android debug APK run 43978692721 remains in progress on the same code head. No hosted migration was applied.

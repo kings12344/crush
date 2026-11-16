@@ -76,7 +76,7 @@ export default function Reels() {
   };
 
   return <Screen>
-    <Heading eyebrow="CRUSH SOCIAL" title="Reels" subtitle="Browse public posts from the campus community." />
+    <Heading eyebrow="CRUSH SOCIAL" title="Reels" subtitle="Browse community posts from verified University of Eswatini students." />
 
     <View style={s.section}>
       <Text style={s.sectionTitle}>Community feed</Text>
@@ -129,7 +129,7 @@ export default function Reels() {
 
     {!session ? <View style={s.guestBox}>
       <Text style={s.guestTitle}>Enjoying CRUSH?</Text>
-      <Text style={s.note}>Browse public content freely. Sign in when you want to comment or access member features.</Text>
+      <Text style={s.note}>CRUSH is exclusively for current UNESWA students aged 18+. Sign in and complete both trusted eligibility checks to access the community.</Text>
       <Pressable accessibilityRole="button" style={s.joinButton} onPress={() => router.push('/(auth)/register')}>
         <Text style={s.joinText}>Create account</Text>
       </Pressable>
@@ -137,7 +137,7 @@ export default function Reels() {
         <Text style={s.loginText}>Already a member? Sign in</Text>
       </Pressable>
     </View> : null}
-    <Text style={s.note}>Demo reels are samples, not real user uploads. Comments require sign-in plus completed trusted 18+ age assurance. Public uploads and moderation tools are still being developed.</Text>
+    <Text style={s.note}>Demo reels are samples, not real user uploads. Comments require sign-in, verified 18+ age assurance and current UNESWA student status. Public uploads and moderation tools are still being developed.</Text>
   </Screen>;
 }
 
