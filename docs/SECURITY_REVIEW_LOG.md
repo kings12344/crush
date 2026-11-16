@@ -46,6 +46,7 @@ Scope: repository source and workflow review, Supabase schema/catalog inspection
 | CR-010 | Info | Supabase Performance Advisor reports 12 unused indexes on a new, near-zero-traffic project. | Do not drop them without representative query plans and workload evidence. | Monitored |
 | CR-012 | Medium | Registration passed raw Supabase Auth errors to the user, which could reveal account existence or internal failure details; Google OAuth screens also surfaced raw provider errors. | Replaced registration and OAuth error details with generic user-facing messages; aligned registration/login copy with 18+ and UNESWA student eligibility. | Committed to PR branch; CI pending |
 | CR-013 | Medium | Hosted RLS policies on `matches` and `conversations` allowed participant SELECT without checking that both participants remained verified or unblocked. Message reads were guarded, but relationship metadata could still be queried after eligibility loss or a block. | PR #8 adds `private.is_match_available`, makes the conversation guard delegate to it, and replaces both SELECT policies. The helper is actor-bound, SECURITY DEFINER with an empty search path, and checks age, current UNESWA student status and both block directions. Added pgTAP catalog assertions for the helper and policies. | Committed to PR #8; local database CI pending; hosted database unchanged |
+| CR-014 | Medium | Community feed and comment RPCs checked the viewer's eligibility but did not consistently filter post/comment authors whose age or UNESWA student status had become pending or revoked. Existing content could remain visible after an author's eligibility loss. | PR #8 joins private verification records for post and comment authors, filters feed posts/comment counts/comment lists to currently eligible authors, and rejects comments on posts by ineligible authors. Added four catalog assertions and nine synthetic behavioral assertions using rolled-back test users. | Committed to PR #8; expanded local database CI pending; hosted database unchanged |
 
 ## Verified controls observed in the hosted project on 17 November 2026
 
@@ -64,7 +65,7 @@ Scope: repository source and workflow review, Supabase schema/catalog inspection
 
 - [ ] Confirm GitHub repository visibility is intentional.
 - [ ] Commit the refreshed package lockfile and restore deterministic `npm ci`.
-- [ ] Run the expanded 58-assertion pgTAP suite, including student-eligibility and match/conversation RLS assertions, in a local/test database.
+- [ ] Run the expanded 62 catalog + 9 synthetic community-author behavioral pgTAP assertions in a local/test database; add two-account behavioral tests for discovery, matching, messaging and blocks.
 - [ ] Run two-account tests for discovery, likes, Secret Crush, conversations, messages, comments and blocks.
 - [ ] Integrate trusted age assurance and University-approved student verification with signed server callbacks.
 - [ ] Verify Auth redirect allowlist and production SMTP.
@@ -85,3 +86,17 @@ Both trusted integrations are still missing. All new accounts must remain hidden
 ## Local database test execution — 17 November 2026
 
 A repository workflow now initializes a disposable local Supabase stack and runs `supabase test db` without hosted-project credentials. The 58-assertion suite passed in run 43974165522 (58 tests, zero failures); the disposable stack applied all migrations successfully. Earlier runs exposed two formatting-sensitive block-filter assertions and one stale conversation-helper assertion after refactoring; those expectations were corrected. A rerun for the latest documentation-only branch head is in progress. No hosted migration was applied.
+
+
+## Community author eligibility review — 17 November 2026
+
+CR-014 was identified while reviewing the restored UNESWA-only community path. The viewer's age and student status were checked, but the earlier PR #8 implementation did not also filter post and comment authors whose eligibility had subsequently changed. This was a branch-level finding; the hosted database has no users and the fix has not been deployed.
+
+The PR #8 migration now:
+- Requires current age and student verification for post authors before returning their posts.
+- Counts only comments whose authors remain verified.
+- Requires both the post author and comment author to remain verified before returning comments.
+- Rejects comment creation against a post whose author is no longer eligible.
+- Preserves bidirectional block filtering.
+
+Four catalog assertions and nine synthetic behavioral assertions were added. The behavioral test inserts two synthetic Auth users, profiles, posts and comments; it checks pending/verified transitions and rolls back all test data. The expanded CI run is pending, so CR-014 is not marked verified yet.
