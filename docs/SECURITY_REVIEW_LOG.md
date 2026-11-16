@@ -64,7 +64,7 @@ Scope: repository source and workflow review, Supabase schema/catalog inspection
 
 - [ ] Confirm GitHub repository visibility is intentional.
 - [ ] Commit the refreshed package lockfile and restore deterministic `npm ci`.
-- [ ] Run the expanded 57-assertion pgTAP suite, including student-eligibility and match/conversation RLS assertions, in a local/test database.
+- [ ] Run the expanded 58-assertion pgTAP suite, including student-eligibility and match/conversation RLS assertions, in a local/test database.
 - [ ] Run two-account tests for discovery, likes, Secret Crush, conversations, messages, comments and blocks.
 - [ ] Integrate trusted age assurance and University-approved student verification with signed server callbacks.
 - [ ] Verify Auth redirect allowlist and production SMTP.
@@ -80,3 +80,8 @@ This is a focused engineering review, not a full penetration test or production 
 The product audience is confirmed as current UNESWA students aged 18+. The production-readiness branch had removed student eligibility from the app and live database. A follow-up branch restores private `student_status` and `student_provider_ref` columns, adds an authenticated own-status RPC, and re-enforces both statuses in discovery, matching, messaging and community operations. The migration is additive and remains unapplied to the hosted database pending test review and production approval. PR #8 also closes CR-013 on its branch by gating match/conversation metadata reads.
 
 Both trusted integrations are still missing. All new accounts must remain hidden and pending. Do not use an email-domain check, student-number form, checkbox or manual client flag as a substitute for institutional verification.
+
+
+## Local database test execution — 17 November 2026
+
+A repository workflow now initializes a disposable local Supabase stack and runs `supabase test db` without hosted-project credentials. The 58-assertion suite has not yet passed: earlier runs exposed two formatting-sensitive block-filter assertions and one stale conversation-helper assertion after refactoring. Those expectations were corrected and the latest run is pending. The migrations themselves applied successfully in the earlier local runs. No hosted migration was applied.
