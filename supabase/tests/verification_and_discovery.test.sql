@@ -2,7 +2,7 @@
 -- Catalog assertions cover the authorization boundary. Two-account behavioral
 -- tests remain required before enabling production discovery.
 begin;
-select plan(58);
+select plan(62);
 
 select has_table('private', 'verification_records', 'verification records are private');
 select has_table('private', 'action_rate_limits', 'rate-limit state is private');
@@ -72,6 +72,11 @@ select ok(exists(select 1 from pg_policies where schemaname='public' and tablena
 select ok(exists(select 1 from pg_policies where schemaname='public' and tablename='conversations' and policyname='conversations_select_verified_unblocked_participant' and qual ilike '%private.is_conversation_available%'),'conversation table reads use the eligibility helper');
 select ok(exists(select 1 from pg_policies where schemaname='public' and tablename='messages' and policyname='messages_select_age_verified_unblocked_match' and qual ilike '%private.is_conversation_available%'),'message table reads use the conversation eligibility helper');
 select ok((select p.prosecdef and coalesce(p.proconfig,array[]::text[]) @> array['search_path=""'] from pg_proc p where p.oid='private.is_conversation_available(uuid)'::regprocedure) and not has_function_privilege('anon','private.is_conversation_available(uuid)','EXECUTE') and has_function_privilege('authenticated','private.is_conversation_available(uuid)','EXECUTE'),'conversation eligibility helper is restricted and pins empty search_path');
+
+select ok(position('post_v.student_status' in lower(pg_get_functiondef('public.get_public_feed(integer,timestamptz)'::regprocedure)))>0,'feed hides posts from authors without current UNESWA verification');
+select ok(position('comment_v.student_status' in lower(pg_get_functiondef('public.get_public_feed(integer,timestamptz)'::regprocedure)))>0,'feed comment counts exclude authors without current UNESWA verification');
+select ok(position('post_v.student_status' in lower(pg_get_functiondef('public.get_post_comments(uuid)'::regprocedure)))>0 and position('comment_v.student_status' in lower(pg_get_functiondef('public.get_post_comments(uuid)'::regprocedure)))>0,'comment reads require both post and comment authors to remain eligible');
+select ok(position('post_v.student_status' in lower(pg_get_functiondef('public.create_post_comment(uuid,text)'::regprocedure)))>0,'comment creation rejects posts whose authors are no longer eligible');
 
 select * from finish();
 rollback;
