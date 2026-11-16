@@ -2,7 +2,7 @@
 -- Catalog assertions cover the authorization boundary. Two-account behavioral
 -- tests remain required before enabling production discovery.
 begin;
-select plan(52);
+select plan(57);
 
 select has_table('private', 'verification_records', 'verification records are private');
 select has_table('private', 'action_rate_limits', 'rate-limit state is private');
@@ -64,6 +64,13 @@ select ok(not has_function_privilege('anon','public.send_message(uuid,text)','EX
 select ok(has_function_privilege('authenticated','public.send_message(uuid,text)','EXECUTE'),'authenticated can call guarded message RPC');
 select ok((select p.prosecdef and coalesce(p.proconfig,array[]::text[]) @> array['search_path=""'] from pg_proc p where p.oid='public.send_message(uuid,text)'::regprocedure),'message RPC is SECURITY DEFINER with empty search_path');
 select ok(position('private.is_conversation_available' in lower(pg_get_functiondef('public.send_message(uuid,text)'::regprocedure)))>0,'message sending applies the shared eligibility guard');
+
+
+select ok((select p.prosecdef and coalesce(p.proconfig,array[]::text[]) @> array['search_path=""'] from pg_proc p where p.oid='private.is_match_available(uuid)'::regprocedure) and not has_function_privilege('anon','private.is_match_available(uuid)','EXECUTE') and has_function_privilege('authenticated','private.is_match_available(uuid)','EXECUTE'),'match eligibility helper is restricted and pins empty search_path');
+select ok(exists(select 1 from pg_policies where schemaname='public' and tablename='matches' and policyname='matches_select_verified_unblocked_participant' and qual ilike '%private.is_match_available%'),'match table reads use the eligibility helper');
+select ok(exists(select 1 from pg_policies where schemaname='public' and tablename='conversations' and policyname='conversations_select_verified_unblocked_participant' and qual ilike '%private.is_conversation_available%'),'conversation table reads use the eligibility helper');
+select ok(exists(select 1 from pg_policies where schemaname='public' and tablename='messages' and policyname='messages_select_age_verified_unblocked_match' and qual ilike '%private.is_conversation_available%'),'message table reads use the conversation eligibility helper');
+select ok((select p.prosecdef and coalesce(p.proconfig,array[]::text[]) @> array['search_path=""'] from pg_proc p where p.oid='private.is_conversation_available(uuid)'::regprocedure) and not has_function_privilege('anon','private.is_conversation_available(uuid)','EXECUTE') and has_function_privilege('authenticated','private.is_conversation_available(uuid)','EXECUTE'),'conversation eligibility helper is restricted and pins empty search_path');
 
 select * from finish();
 rollback;
