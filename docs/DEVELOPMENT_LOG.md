@@ -69,3 +69,9 @@
 - Add two-account behavioral tests for discovery, likes, Secret Crush, conversation reads, message sends and both-direction blocks.
 - Integrate approved age and current-student verification providers with signed server callbacks.
 - Synchronize the dependency lockfile and complete device, moderation, account-rights and operational readiness work.
+
+
+### QA follow-up — 17 November 2026
+- The first expanded local Supabase run (43978158726) passed all 9 synthetic community-author behavioral assertions and 60/62 catalog assertions. Two older block-filter checks were formatting-sensitive, not runtime authorization failures.
+- Updated those catalog checks to normalize whitespace before matching SQL definitions.
+- Corrected database rerun 43978692785 is queued on head bcbdf95; Android debug APK run 43978692721 is pending on the same head. No overall pass is claimed yet.
