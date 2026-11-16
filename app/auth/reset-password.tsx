@@ -18,22 +18,26 @@ export default function ResetPassword() {
   useEffect(() => {
     let active = true;
     async function exchange() {
-      if (!code || typeof code !== 'string') {
-        const { data } = await supabase.auth.getSession();
-        if (active && data.session) {
+      try {
+        if (!code || typeof code !== 'string') {
+          const { data } = await supabase.auth.getSession();
+          if (active && data.session) {
+            setReady(true);
+            setMessage('Choose a new password for your CRUSH account.');
+          } else if (active) {
+            setMessage('This reset link is missing or expired. Return to sign in and request a new one.');
+          }
+          return;
+        }
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        if (active && !error && data.session) {
           setReady(true);
           setMessage('Choose a new password for your CRUSH account.');
         } else if (active) {
-          setMessage('This reset link is missing or expired. Return to sign in and request a new one.');
+          setMessage('This reset link may have expired or already been used. Request a new one from the sign-in screen.');
         }
-        return;
-      }
-      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-      if (active && !error && data.session) {
-        setReady(true);
-        setMessage('Choose a new password for your CRUSH account.');
-      } else if (active) {
-        setMessage('This reset link may have expired or already been used. Request a new one from the sign-in screen.');
+      } catch {
+        if (active) setMessage('We could not validate the reset link right now. Check your connection and try again.');
       }
     }
     exchange();
@@ -50,13 +54,18 @@ export default function ResetPassword() {
       return;
     }
     setBusy(true);
-    const { error } = await supabase.auth.updateUser({ password });
-    setBusy(false);
-    if (error) {
-      Alert.alert('Could not update password', 'The reset link may have expired. Request a new one and try again.');
-      return;
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        Alert.alert('Could not update password', 'The reset link may have expired. Request a new one and try again.');
+        return;
+      }
+      router.replace('/pending');
+    } catch {
+      Alert.alert('Could not update password', 'Check your connection and try again. If the reset link expired, request a new one.');
+    } finally {
+      setBusy(false);
     }
-    router.replace('/pending');
   };
 
   return (

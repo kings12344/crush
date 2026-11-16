@@ -1,6 +1,6 @@
 # CRUSH Mobile App
 
-CRUSH is a student social-discovery app for adults aged 18+, initially planned for the University of Eswatini (UNESWA), starting with Kwaluseni.
+CRUSH is a social-discovery app for adults aged 18+, launching initially in Eswatini. University communities may be early audiences, but enrollment verification is not required.
 
 ## Stack
 
@@ -34,7 +34,7 @@ Email/password sign-up must keep email confirmation enabled. The default Supabas
 
 **CRUSH is still a development build, not a production dating app.** The Supabase project and database schema are live, and the mobile authentication integration is implemented on the feature branch. The Android pull-request workflow runs TypeScript checks and builds a sideloadable debug APK. Physical-device authentication and session persistence still need testing.
 
-The app keeps signed-in users on a pending-access screen until trusted services verify both 18+ age eligibility and UNESWA student status. Those verification workflows are not connected, so discovery remains locked. The database includes authenticated, rate-limited discovery, like and Secret Crush RPCs that check both users' verification state, profile visibility, dating preferences and both directions of blocks before returning profiles or creating a mutual match/conversation. Direct client table inserts for likes and Secret Crush remain revoked. These RPCs still need two-account adversarial behavior tests before production use.
+The app now reads age eligibility from a narrow authenticated Supabase RPC and keeps every tab locked until the server reports trusted 18+ verification. No age-verification provider is connected yet, so new accounts remain pending. UNESWA student verification has been removed from eligibility. The live Supabase database now has age-only discovery, likes, Secret Crush, mutual-match messaging and age-gated community reads; direct client writes to sensitive tables remain revoked. Two-account adversarial tests and physical-device validation are still required before launch.
 
 Reporting and blocking have authenticated RPCs with server-derived actor identity and rate limits. The report review queue, moderation operations, account deletion/export and full messaging experience are not complete. The discovery, reels, matches and inbox areas still include prototype/local preview behavior. Do not present sample profiles or interactions as real users or real activity. Do not invite public users or collect real identity documents. Use controlled test accounts only until device, privacy and security tests pass.
 
@@ -46,11 +46,16 @@ The Android debug APK GitHub Actions workflow runs on pushes to main, pull reque
 
 This is a **debug build for testing**, signed with a temporary runner-generated debug key. It is not release-signed or published to Google Play. A later build may not update over an APK signed by a different temporary key; uninstall the older test build first if Android refuses the update. Artifacts are retained for 30 days.
 
+
+## Standalone Android APK (no Metro)
+
+The **Android standalone release APK** workflow generates the Android native project, runs Gradle's `assembleRelease` task, and uploads the `crush-android-standalone-release` artifact. This release-mode test build is intended to include the JavaScript bundle, so it should not require Metro. See [docs/ANDROID_RELEASE_BUILD.md](docs/ANDROID_RELEASE_BUILD.md) for installation instructions. The APK still needs a successful CI run and physical-device testing before it can be considered verified. This is not a production signing setup.
+
 ## Product and privacy rules
 
 - Strictly 18+; eligibility must be enforced by trusted services, not a client checkbox.
-- Student status must be confirmed through a University-approved process.
-- Keep legal identity and student verification evidence private and minimize retention.
+- Trusted 18+ age assurance must be enforced by the server; client-entered dates and checkboxes cannot grant eligibility.
+- Keep any age-verification evidence private, minimize retention, and store only the minimum outcome/reference data needed.
 - Unmatched Secret Crush senders must never be revealed.
 - Only eligible, mutually matched users can use dating chat and calls; block state overrides matching.
 - No precise live location.

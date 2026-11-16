@@ -4,6 +4,7 @@ import { Screen } from '../../components/Screen';
 import { Heading } from '../../components/Heading';
 import { Panel } from '../../components/Panel';
 import { colors } from '../../constants/theme';
+import { Heart, X, Send } from 'lucide-react-native';
 import { assertSupabaseConfigured, supabase } from '../../lib/supabase';
 
 type Mode = 'Dating' | 'Friends';
@@ -83,7 +84,7 @@ export default function Discover() {
     } catch {
       Alert.alert(
         'Action unavailable',
-        'CRUSH could not process this action. Your account may still be awaiting age and student verification, or the service may be temporarily unavailable.',
+        'CRUSH could not process this action. Your account may still be awaiting trusted age verification, or the service may be temporarily unavailable.',
       );
     } finally {
       setActing(null);
@@ -155,7 +156,7 @@ export default function Discover() {
       </View>
       <Panel>
         <Text style={s.privacy}>Privacy first</Text>
-        <Text style={s.tip}>Only profiles that pass CRUSH's age and UNESWA student checks can appear. Your exact location is never shown.</Text>
+        <Text style={s.tip}>Only profiles that pass CRUSH's trusted 18+ age check can appear. Your exact location is never shown.</Text>
       </Panel>
 
       {loading ? (
@@ -180,14 +181,14 @@ export default function Discover() {
             <>
               <View style={s.actions}>
                 <Pressable accessibilityRole="button" disabled={acting !== null} style={s.pass} onPress={() => pass(profile)}>
-                  <Text style={s.passText}>Pass</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><X size={17} color={colors.muted} /><Text style={s.passText}>Pass</Text></View>
                 </Pressable>
                 <Pressable accessibilityRole="button" disabled={acting !== null} style={s.like} onPress={() => void act('Like', profile)}>
-                  {acting === profile.id ? <ActivityIndicator color="white" /> : <Text style={s.likeText}>♡  Like</Text>}
+                  {acting === profile.id ? <ActivityIndicator color="white" /> : <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Heart size={17} color="white" /><Text style={s.likeText}>Like</Text></View>}
                 </Pressable>
               </View>
               <Pressable accessibilityRole="button" disabled={acting !== null} onPress={() => void act('Secret Crush', profile)}>
-                <Text style={s.secret}>Send a Secret Crush 💌</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, paddingTop: 14 }}><Send size={16} color={colors.pink} /><Text style={[s.secret, { paddingTop: 0 }]}>Send a Secret Crush</Text></View>
               </Pressable>
             </>
           ) : (
@@ -204,7 +205,7 @@ export default function Discover() {
         <Panel>
           <Text style={s.name}>No eligible profiles yet</Text>
           <Text style={s.tip}>
-            CRUSH only shows accounts after both age and student verification are complete. There may not be verified profiles available in this discovery mode yet.
+            CRUSH only shows accounts after trusted 18+ age assurance is complete. There may not be age-verified profiles available in this discovery mode yet.
           </Text>
           <Pressable style={s.reset} onPress={() => void loadProfiles()}><Text style={s.likeText}>Refresh profiles</Text></Pressable>
         </Panel>

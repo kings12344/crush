@@ -1,22 +1,32 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { AppState } from 'react-native';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
+
+export type AgeVerificationStatus = 'loading' | 'pending' | 'verified' | 'rejected' | 'unavailable';
 
 type AuthContextValue = {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  ageStatus: AgeVerificationStatus;
+  refreshAgeStatus: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue>({
   session: null,
   user: null,
   loading: true,
+  ageStatus: 'loading',
+  refreshAgeStatus: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [ageStatus, setAgeStatus] = useState<AgeVerificationStatus>('loading');
+  const ageCheckGeneration = useRef(0);
+  const userId = session?.user.id;
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -54,11 +64,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const refreshAgeStatus = useCallback(async () => {
+    if (!userId || !isSupabaseConfigured) {
+      setAgeStatus('loading');
+      return;
+    }
+
+    const generation = ++ageCheckGeneration.current;
+    try {
+      const { data, error } = await supabase.rpc('get_my_age_verification_status');
+      if (generation !== ageCheckGeneration.current) return;
+      if (error) throw error;
+      if (data === 'verified') setAgeStatus('verified');
+      else if (data === 'rejected') setAgeStatus('rejected');
+      else setAgeStatus('pending');
+    } catch {
+      // Fail closed: a network or RPC failure must never unlock the app.
+      if (generation === ageCheckGeneration.current) setAgeStatus('unavailable');
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) {
+      ageCheckGeneration.current += 1;
+      setAgeStatus('loading');
+      return;
+    }
+
+    ageCheckGeneration.current += 1;
+    setAgeStatus('loading');
+    void refreshAgeStatus();
+
+    const appStateSubscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void refreshAgeStatus();
+    });
+
+    return () => appStateSubscription.remove();
+  }, [userId, refreshAgeStatus]);
+
   const value = useMemo(() => ({
     session,
     user: session?.user ?? null,
     loading,
-  }), [session, loading]);
+    ageStatus,
+    refreshAgeStatus,
+  }), [session, loading, ageStatus, refreshAgeStatus]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

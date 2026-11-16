@@ -4,7 +4,7 @@
 
 begin;
 
-select plan(29);
+select plan(33);
 
 select has_table('private', 'verification_records',
   'verification records are stored outside the exposed public schema');
@@ -125,6 +125,25 @@ select ok(not has_function_privilege('anon', 'public.get_blocked_users()', 'EXEC
   'anonymous users cannot list blocked accounts');
 select ok(has_function_privilege('authenticated', 'public.get_blocked_users()', 'EXECUTE'),
   'signed-in users can retrieve their own blocked-account list');
+
+select ok(not has_function_privilege('anon',
+  'public.get_public_feed(integer,timestamptz)', 'EXECUTE'),
+  'anonymous users cannot execute the community feed');
+select ok(has_function_privilege('authenticated',
+  'public.get_public_feed(integer,timestamptz)', 'EXECUTE'),
+  'verified signed-in users can call the community feed RPC');
+select ok(
+  position('b.blocker_id = v_actor and b.blocked_id = p.author_id' in
+    lower(pg_get_functiondef('public.get_public_feed(integer,timestamptz)'::regprocedure))) > 0
+  and position('b.blocked_id = v_actor and b.blocker_id = p.author_id' in
+    lower(pg_get_functiondef('public.get_public_feed(integer,timestamptz)'::regprocedure))) > 0,
+  'community feed excludes post authors blocked in either direction');
+select ok(
+  position('b.blocker_id = v_actor and b.blocked_id = c.author_id' in
+    lower(pg_get_functiondef('public.get_public_feed(integer,timestamptz)'::regprocedure))) > 0
+  and position('b.blocked_id = v_actor and b.blocker_id = c.author_id' in
+    lower(pg_get_functiondef('public.get_public_feed(integer,timestamptz)'::regprocedure))) > 0,
+  'community comment counts exclude commenters blocked in either direction');
 
 select * from finish();
 rollback;

@@ -7,6 +7,7 @@ import { Screen } from '../../components/Screen';
 import { colors } from '../../constants/theme';
 import { ensureProfile } from '../../lib/auth-profile';
 import { assertSupabaseConfigured, supabase } from '../../lib/supabase';
+import { startGoogleSignIn } from '../../lib/google-auth';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -36,6 +37,18 @@ export default function Login() {
     } catch {
       setNotice('CRUSH could not complete sign-in. Check your connection and try again.');
     } finally {
+      setBusy(false);
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    setNotice('');
+    setBusy(true);
+    try {
+      await startGoogleSignIn();
+      setBusy(false);
+    } catch {
+      setNotice('Google sign-in is unavailable right now. Please try again later.');
       setBusy(false);
     }
   };
@@ -101,6 +114,9 @@ export default function Login() {
         <Pressable accessibilityRole="button" disabled={busy} style={styles.primary} onPress={signIn}>
           {busy ? <ActivityIndicator color="white" /> : <Text style={styles.primaryText}>Sign in</Text>}
         </Pressable>
+        <Pressable accessibilityRole="button" disabled={busy} style={styles.google} onPress={signInWithGoogle}>
+          <Text style={styles.googleText}>Continue with Google</Text>
+        </Pressable>
         <Pressable accessibilityRole="button" disabled={busy} onPress={resetPassword} style={styles.forgot}>
           <Text style={styles.link}>Forgot password?</Text>
         </Pressable>
@@ -111,7 +127,7 @@ export default function Login() {
           <Text style={styles.link}>Create an account</Text>
         </Pressable>
       </View>
-      <Text style={styles.disclaimer}>Signing in does not bypass CRUSH's 18+ age and UNESWA student eligibility checks.</Text>
+      <Text style={styles.disclaimer}>Signing in does not bypass CRUSH's trusted 18+ age assurance checks.</Text>
     </Screen>
   );
 }
@@ -123,6 +139,8 @@ const styles = StyleSheet.create({
   primary: { backgroundColor: colors.pink, padding: 16, borderRadius: 14, alignItems: 'center', marginTop: 12, minHeight: 52, justifyContent: 'center' },
   primaryText: { color: 'white', fontWeight: '900', fontSize: 16 },
   forgot: { padding: 12, alignItems: 'center' },
+  google: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.border, padding: 15, borderRadius: 14, alignItems: 'center', marginTop: 10, minHeight: 52, justifyContent: 'center' },
+  googleText: { color: colors.black, fontWeight: '900', fontSize: 15 },
   link: { color: colors.pink, fontWeight: '900' },
   notice: { color: colors.pinkDark, backgroundColor: colors.blush, padding: 11, borderRadius: 10, lineHeight: 18, marginTop: 8 },
   footer: { flexDirection: 'row', gap: 6, justifyContent: 'center', alignItems: 'center', padding: 12 },
