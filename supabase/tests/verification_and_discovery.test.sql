@@ -2,7 +2,7 @@
 -- Catalog assertions cover the authorization boundary. Two-account behavioral
 -- tests remain required before enabling production discovery.
 begin;
-select plan(57);
+select plan(58);
 
 select has_table('private', 'verification_records', 'verification records are private');
 select has_table('private', 'action_rate_limits', 'rate-limit state is private');
@@ -49,7 +49,7 @@ select ok(has_function_privilege('authenticated','public.get_my_student_verifica
 select ok(position('own_verification.student_status' in lower(pg_get_functiondef('public.discover_profiles(text,integer)'::regprocedure)))>0 and position('vr.student_status' in lower(pg_get_functiondef('public.discover_profiles(text,integer)'::regprocedure)))>0,'discovery requires verified student status for caller and candidate');
 select ok(position('vr.student_status' in lower(pg_get_functiondef('public.send_like(uuid)'::regprocedure)))>0,'likes require verified student status for both participants');
 select ok(position('vr.student_status' in lower(pg_get_functiondef('public.send_secret_crush(uuid)'::regprocedure)))>0,'Secret Crush requires verified student status for both participants');
-select ok(position('own_v.student_status' in lower(pg_get_functiondef('private.is_conversation_available(uuid)'::regprocedure)))>0 and position('peer_v.student_status' in lower(pg_get_functiondef('private.is_conversation_available(uuid)'::regprocedure)))>0,'conversation access requires both participants to have verified student status');
+select ok(position('private.is_match_available' in lower(pg_get_functiondef('private.is_conversation_available(uuid)'::regprocedure)))>0,'conversation access delegates to match eligibility helper');
 select ok(position('v.student_status' in lower(pg_get_functiondef('public.get_public_feed(integer,timestamptz)'::regprocedure)))>0,'community feed requires verified UNESWA student status');
 select ok(position('v.student_status' in lower(pg_get_functiondef('public.get_post_comments(uuid)'::regprocedure)))>0,'community comment reads require verified UNESWA student status');
 select ok(position('v.student_status' in lower(pg_get_functiondef('public.create_post_comment(uuid,text)'::regprocedure)))>0,'community comment creation requires verified UNESWA student status');
@@ -67,6 +67,7 @@ select ok(position('private.is_conversation_available' in lower(pg_get_functiond
 
 
 select ok((select p.prosecdef and coalesce(p.proconfig,array[]::text[]) @> array['search_path=""'] from pg_proc p where p.oid='private.is_match_available(uuid)'::regprocedure) and not has_function_privilege('anon','private.is_match_available(uuid)','EXECUTE') and has_function_privilege('authenticated','private.is_match_available(uuid)','EXECUTE'),'match eligibility helper is restricted and pins empty search_path');
+select ok(position('own_v.age_status' in lower(pg_get_functiondef('private.is_match_available(uuid)'::regprocedure)))>0 and position('own_v.student_status' in lower(pg_get_functiondef('private.is_match_available(uuid)'::regprocedure)))>0 and position('peer_v.age_status' in lower(pg_get_functiondef('private.is_match_available(uuid)'::regprocedure)))>0 and position('peer_v.student_status' in lower(pg_get_functiondef('private.is_match_available(uuid)'::regprocedure)))>0 and position('b.blocker_id = m.user_low' in lower(pg_get_functiondef('private.is_match_available(uuid)'::regprocedure)))>0 and position('b.blocker_id = m.user_high' in lower(pg_get_functiondef('private.is_match_available(uuid)'::regprocedure)))>0,'match eligibility helper checks both participants and both block directions');
 select ok(exists(select 1 from pg_policies where schemaname='public' and tablename='matches' and policyname='matches_select_verified_unblocked_participant' and qual ilike '%private.is_match_available%'),'match table reads use the eligibility helper');
 select ok(exists(select 1 from pg_policies where schemaname='public' and tablename='conversations' and policyname='conversations_select_verified_unblocked_participant' and qual ilike '%private.is_conversation_available%'),'conversation table reads use the eligibility helper');
 select ok(exists(select 1 from pg_policies where schemaname='public' and tablename='messages' and policyname='messages_select_age_verified_unblocked_match' and qual ilike '%private.is_conversation_available%'),'message table reads use the conversation eligibility helper');
