@@ -325,6 +325,8 @@ comment on function public.send_like(uuid) is 'Creates likes and matches only fo
 comment on function public.send_secret_crush(uuid) is 'Creates Secret Crush interactions only for age-verified current UNESWA students who are visible, opted in and unblocked.';
 comment on function private.is_match_available(uuid) is 'Allows match reads only for participants who remain age-verified, current UNESWA students and unblocked.';
 comment on function private.is_conversation_available(uuid) is 'Allows messages only for mutual-match participants who remain age-verified, current UNESWA students and unblocked.';
-comment on function public.get_public_feed(integer,timestamptz) is 'Returns community posts only to authenticated age-verified current UNESWA students and excludes blocked authors and comments.';
+comment on function public.get_public_feed(integer,timestamptz) is 'Returns posts only to eligible viewers and only from currently age-verified UNESWA student authors; comment counts also exclude ineligible or blocked commenters.';
+comment on function public.get_post_comments(uuid) is 'Returns comments only when the viewer, post author and comment authors remain age-verified current UNESWA students and unblocked.';
+comment on function public.create_post_comment(uuid,text) is 'Creates comments only for eligible viewers on posts whose authors remain age-verified current UNESWA students and unblocked.';
 comment on function public.get_my_conversations() is 'Lists mutual-match conversations only when both participants remain age-verified, current UNESWA students and unblocked.';
 comment on function public.send_message(uuid,text) is 'Sends messages only into conversations where both participants remain age-verified, current UNESWA students and unblocked.';
