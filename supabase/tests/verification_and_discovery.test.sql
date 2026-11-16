@@ -2,7 +2,7 @@
 -- Catalog assertions cover the authorization boundary. Two-account behavioral
 -- tests remain required before enabling production discovery.
 begin;
-select plan(44);
+select plan(52);
 
 select has_table('private', 'verification_records', 'verification records are private');
 select has_table('private', 'action_rate_limits', 'rate-limit state is private');
@@ -53,6 +53,17 @@ select ok(position('own_v.student_status' in lower(pg_get_functiondef('private.i
 select ok(position('v.student_status' in lower(pg_get_functiondef('public.get_public_feed(integer,timestamptz)'::regprocedure)))>0,'community feed requires verified UNESWA student status');
 select ok(position('v.student_status' in lower(pg_get_functiondef('public.get_post_comments(uuid)'::regprocedure)))>0,'community comment reads require verified UNESWA student status');
 select ok(position('v.student_status' in lower(pg_get_functiondef('public.create_post_comment(uuid,text)'::regprocedure)))>0,'community comment creation requires verified UNESWA student status');
+
+
+select ok(not has_function_privilege('anon','public.get_my_conversations()','EXECUTE'),'anon cannot list conversations');
+select ok(has_function_privilege('authenticated','public.get_my_conversations()','EXECUTE'),'authenticated can list guarded conversations');
+select ok((select p.prosecdef and coalesce(p.proconfig,array[]::text[]) @> array['search_path=""'] from pg_proc p where p.oid='public.get_my_conversations()'::regprocedure),'conversation list RPC is SECURITY DEFINER with empty search_path');
+select ok(position('private.is_conversation_available' in lower(pg_get_functiondef('public.get_my_conversations()'::regprocedure)))>0,'conversation list applies the shared eligibility guard');
+
+select ok(not has_function_privilege('anon','public.send_message(uuid,text)','EXECUTE'),'anon cannot send messages');
+select ok(has_function_privilege('authenticated','public.send_message(uuid,text)','EXECUTE'),'authenticated can call guarded message RPC');
+select ok((select p.prosecdef and coalesce(p.proconfig,array[]::text[]) @> array['search_path=""'] from pg_proc p where p.oid='public.send_message(uuid,text)'::regprocedure),'message RPC is SECURITY DEFINER with empty search_path');
+select ok(position('private.is_conversation_available' in lower(pg_get_functiondef('public.send_message(uuid,text)'::regprocedure)))>0,'message sending applies the shared eligibility guard');
 
 select * from finish();
 rollback;
