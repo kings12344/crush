@@ -74,4 +74,4 @@
 ### QA follow-up — 17 November 2026
 - The first expanded local Supabase run (43978158726) passed all 9 synthetic community-author behavioral assertions and 60/62 catalog assertions. Two older block-filter checks were formatting-sensitive, not runtime authorization failures.
 - Updated those catalog checks to normalize whitespace before matching SQL definitions.
-- Corrected database rerun 43978692785 is queued on head bcbdf95; Android debug APK run 43978692721 is pending on the same head. No overall pass is claimed yet.
+- Corrected database rerun 43978692785 passed **71/71 tests** (62 catalog + 9 synthetic behavioral) on head bcbdf95. Android debug APK run 43978692721 remains in progress on the same code head. No hosted migration was applied.
